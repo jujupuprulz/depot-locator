@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Depot Locator</title>
+  <link rel="stylesheet" href="depot-locator-new.css">
+  <link rel="stylesheet" href="space-banner.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
+  <!-- Leaflet Geocoder CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <!-- Stars background for space theme -->
+      <div class="stars-bg" id="stars-bg"></div>
+
+      <div class="logo-container">
+        <div class="logo-emblem">
+          <div class="logo-orbit">
+            <div class="logo-planet"></div>
+          </div>
+          <div class="logo-rocket-container">
+            <div class="logo-rocket">
+              <div class="logo-rocket-body"></div>
+              <div class="logo-rocket-window"></div>
+              <div class="logo-rocket-fins"></div>
+              <div class="logo-rocket-flames"></div>
+            </div>
+          </div>
+        </div>
+        <div class="logo-text">
+          <h1>Global Depot Locator</h1>
+          <p class="logo-tagline">Worldwide Coverage Network</p>
+        </div>
+      </div>
+      <div class="nav-links">
+        <a href="depot-manager.html" class="nav-link">
+          <i class="fas fa-satellite-dish"></i> Manage Depots
+        </a>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <div class="search-container">
+        <h2>Search Location</h2>
+        <form id="search-form" onsubmit="directSearch(); return false;">
+          <div class="search-input-container">
+            <input type="text" id="address-input" placeholder="Enter coordinates or location to check coverage...">
+            <button type="button" id="search-button" aria-label="Search" onclick="directSearch()"><i class="fas fa-search"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div id="status-message" class="status-message"></div>
+      <div id="loading-indicator" class="loading-indicator">
+        <div class="spinner"></div>
+        <div>Loading data from Supabase...</div>
+      </div>
+      <div class="map-container">
+        <div id="map"></div>
+      </div>
+      <div id="search-results-overlay"></div>
+    </div>
+
+    <!-- Add Depot Modal -->
+    <div id="depot-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2 id="modal-title">Add New Depot</h2>
+        <form id="depot-form">
+          <input type="hidden" id="depot-id">
+          <div class="form-group">
+            <label for="depot-name">Depot Name:</label>
+            <input type="text" id="depot-name" required>
+          </div>
+          <input type="hidden" id="depot-country" value="">
+          <div class="form-group">
+            <label for="depot-address-search">Search Address:</label>
+            <div class="address-search-container">
+              <input type="text" id="depot-address-search" placeholder="Type to search for an address...">
+              <button type="button" id="address-search-button"><i class="fas fa-search"></i></button>
+            </div>
+            <div id="address-search-results" class="address-search-results"></div>
+            <input type="hidden" id="depot-address">
+            <div id="selected-address-display" class="selected-address-display"></div>
+          </div>
+          <div class="form-group">
+            <label for="depot-status">Approval Status:</label>
+            <select id="depot-status" required>
+              <option value="approved">Approved</option>
+              <option value="in-progress">In Progress</option>
+              <option value="not-approved">Not Approved</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="depot-notes">Notes (Optional):</label>
+            <textarea id="depot-notes" rows="2"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="save-button">Save Depot</button>
+            <button type="button" class="cancel-button">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+      <div class="modal-content confirm-modal-content">
+        <span class="close-button" id="close-confirm-modal">&times;</span>
+        <h2>Confirm Deletion</h2>
+        <p id="confirm-message">Are you sure you want to delete this depot?</p>
+        <div class="form-actions">
+          <button id="confirm-delete" class="delete-button">Delete</button>
+          <button id="cancel-delete" class="cancel-button">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    <!-- Leaflet Geocoder -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+    // Add global error handler for better user experience
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error('Global error:', message, 'at', source, lineno, colno);
+
+      // Show a user-friendly error message
+      const errorContainer = document.getElementById('search-results-overlay');
+      if (errorContainer) {
+        errorContainer.innerHTML = `<div class="search-error"><i class="fas fa-exclamation-circle"></i> Something went wrong. Please try again.</div>`;
+        errorContainer.classList.add('show');
+      }
+      return false;
+    };
+
+    // Create animated stars background for space theme
+    function createStars() {
+      const starsContainer = document.getElementById('stars-bg');
+      if (!starsContainer) return;
+
+      const starCount = 100;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Random size
+        const size = Math.random() * 2;
+
+        // Random animation delay
+        const delay = Math.random() * 5;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+
+        starsContainer.appendChild(star);
+      }
+    }
+
+    // Log when the page loads
+    console.log('Page loaded at:', new Date().toISOString());
+
+    // Create stars when the page loads
+    document.addEventListener('DOMContentLoaded', createStars);
+
+    // Check if Leaflet is loaded
+    setTimeout(function() {
+      if (window.L) {
+        console.log('Leaflet is loaded:', window.L.version);
+      } else {
+        console.error('Leaflet is not loaded');
+      }
+
+      // Check if map element exists
+      const mapElement = document.getElementById('map');
+      if (mapElement) {
+        console.log('Map element exists with dimensions:', mapElement.offsetWidth, 'x', mapElement.offsetHeight);
+      } else {
+        console.error('Map element does not exist');
+      }
+    }, 2000);
+    </script>
+    <script src="depot-locator-new.js" type="module"></script>
+    <script type="module">
+      import { verifyMigration, displayVerificationResults, startMigration } from './verify-migration.js';
+
+      // Make startMigration available globally
+      window.startMigration = startMigration;
+
+      // Verify migration after page loads
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Wait a bit to ensure the main script has loaded data
+        setTimeout(async () => {
+          const results = await verifyMigration();
+          displayVerificationResults(results);
+        }, 3000);
+      });
+    </script>
+</body>
+</html>

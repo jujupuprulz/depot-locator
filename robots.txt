@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /depot-locator-new.html
+Allow: /depot-locator-new.css
+Allow: /space-banner.css
+Disallow: /depot-locator.html
+Disallow: /depot-locator.js
+Disallow: /depot-locator.css
+Disallow: /debug_server.py
+Disallow: /simple_server.py
+Disallow: /flask_server.py
+Disallow: /express_server.js

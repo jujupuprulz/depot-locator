@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="80" viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="120" height="80" fill="#0F1B33"/>
+
+  <!-- Logo container -->
+  <g transform="translate(10, 10)">
+    <!-- Triangle logo -->
+    <g transform="translate(30, 0) scale(0.4)">
+      <!-- Top triangle part -->
+      <path d="M0 50 L50 0 L100 50" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- Cyan accent line -->
+      <path d="M100 50 L150 100" stroke="#40C4FF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- Bottom V shape -->
+      <path d="M50 150 L100 100 L50 50 L0 100" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+
+    <!-- VAST text -->
+    <g transform="translate(0, 50)">
+      <!-- V -->
+      <path d="M15 0 L25 15 L35 0" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- A -->
+      <path d="M45 15 L55 0 L65 15 M47 10 L63 10" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- S -->
+      <path d="M75 0 C75 0, 70 0, 70 5 C70 10, 80 10, 80 15 C80 15, 75 15, 75 15" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+      <!-- T -->
+      <path d="M90 0 L110 0 M100 0 L100 15" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+  </g>
+</svg>
