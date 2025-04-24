@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Depot Locator</title>
+  <link rel="stylesheet" href="space-banner.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Exo 2', sans-serif;
+      background-color: #0a0e1a;
+      color: #e0e0ff;
+      overflow-x: hidden;
+    }
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #map {
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 200px);
+      z-index: 1;
+    }
+
+    /* Leaflet specific styles */
+    .leaflet-popup-content-wrapper {
+      background: rgba(30, 40, 70, 0.95);
+      color: #ffffff;
+      border-radius: 8px;
+      border: 1px solid rgba(100, 150, 255, 0.5);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .leaflet-popup-tip {
+      background: rgba(30, 40, 70, 0.95);
+      border: 1px solid rgba(100, 150, 255, 0.5);
+    }
+
+    .leaflet-popup-content h3 {
+      color: #4d90fe;
+      font-family: 'Orbitron', sans-serif;
+      margin-top: 0;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .leaflet-popup-content p {
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .leaflet-popup-content strong {
+      color: #a0d0ff;
+    }
+    .search-bar {
+      background: linear-gradient(135deg, #0f1b33 0%, #1a2a4a 50%, #0f1b33 100%);
+      padding: 0.5rem 2rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .search-stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .search-container {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .search-container h2 {
+      display: inline-block;
+      margin: 0 1rem 0 0;
+      color: #a0a0ff;
+      font-size: 0.85rem;
+      font-family: 'Orbitron', sans-serif;
+      text-shadow: 0 0 5px rgba(100, 150, 255, 0.5);
+      vertical-align: middle;
+    }
+    #search-form {
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-container {
+      display: flex;
+      flex: 1;
+      position: relative;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      border-radius: 25px;
+      overflow: hidden;
+    }
+    #address-input {
+      flex: 1;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      border-right: none;
+      border-radius: 25px 0 0 25px;
+      font-size: 0.85rem;
+      transition: all 0.3s;
+      background-color: rgba(15, 25, 50, 0.8);
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) inset;
+    }
+    #address-input:focus {
+      outline: none;
+      background-color: rgba(20, 30, 60, 0.9);
+      box-shadow: 0 0 10px rgba(100, 150, 255, 0.3) inset, 0 0 5px rgba(100, 150, 255, 0.5);
+      border-color: rgba(100, 150, 255, 0.5);
+    }
+    #search-button {
+      background: linear-gradient(135deg, #3060ff, #6090ff);
+      color: white;
+      border: none;
+      border-radius: 0 25px 25px 0;
+      padding: 0 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.85rem;
+      width: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #search-button:hover {
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      box-shadow: 0 0 15px rgba(100, 150, 255, 0.5);
+      transform: scale(1.05);
+    }
+    /* Info window styles */
+    .info-window {
+      color: #ffffff;
+      font-family: 'Exo 2', sans-serif;
+    }
+
+    /* Search results styles */
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: rgba(15, 25, 50, 0.95);
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .search-result-item {
+      padding: 8px 10px;
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.2);
+    }
+
+    .search-result-item:hover {
+      background-color: rgba(30, 40, 70, 0.95);
+    }
+
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+    .info-window h3 {
+      margin-top: 0;
+      font-family: 'Orbitron', sans-serif;
+      color: #4d90fe;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    }
+    .info-window p {
+      margin: 8px 0;
+      font-weight: 500;
+    }
+    .info-window strong {
+      color: #a0d0ff;
+    }
+    .status-approved {
+      color: #3498db;
+      font-weight: bold;
+    }
+    .status-in-progress {
+      color: #f39c12;
+      font-weight: bold;
+    }
+    .status-not-approved {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <!-- Stars background for space theme -->
+      <div class="stars-bg" id="stars-bg"></div>
+
+      <div class="logo-container">
+        <div class="logo-emblem">
+          <div class="logo-orbit">
+            <div class="logo-planet"></div>
+          </div>
+          <div class="logo-rocket-container">
+            <div class="logo-rocket">
+              <div class="logo-rocket-body"></div>
+              <div class="logo-rocket-window"></div>
+              <div class="logo-rocket-fins"></div>
+              <div class="logo-rocket-flames"></div>
+            </div>
+          </div>
+        </div>
+        <div class="logo-text">
+          <h1>Global Depot Locator</h1>
+          <p class="logo-tagline">Worldwide Coverage Network</p>
+        </div>
+      </div>
+
+      <div class="nav-links">
+        <a href="basic-depot-manager.html" class="nav-link">
+          <i class="fas fa-satellite-dish"></i> Manage Depots
+        </a>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <div class="search-stars" id="search-stars"></div>
+      <div class="search-container">
+        <form id="search-form">
+          <h2>Search Location</h2>
+          <div class="search-input-container">
+            <input type="text" id="address-input" placeholder="Enter an address to check for depot support coverage...">
+            <button type="button" id="search-button" aria-label="Search"><i class="fas fa-search"></i></button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script>
+    // List of embargoed countries
+    const embargoedCountries = [
+      'Cuba',
+      'Iran',
+      'North Korea',
+      'Syria',
+      'Russia',
+      'Belarus',
+      'Venezuela',
+      'Myanmar',
+      'Afghanistan'
+    ];
+
+    // Sample depot data
+    const depots = [
+      {
+        "id": "sample-1",
+        "name": "Sample Depot",
+        "country": "USA",
+        "address": "123 Main St, Sample City, USA",
+        "status": "approved",
+        "notes": "This is a sample depot for testing",
+        "lat": 37.7749,
+        "lng": -122.4194
+      },
+      {
+        "id": "sample-2",
+        "name": "Seattle Distribution Center",
+        "country": "USA",
+        "address": "Seattle, WA, USA",
+        "status": "approved",
+        "notes": "Pacific Northwest hub",
+        "lat": 47.6062,
+        "lng": -122.3321
+      },
+      {
+        "id": "sample-3",
+        "name": "Miami Logistics Hub",
+        "country": "USA",
+        "address": "Miami, FL, USA",
+        "status": "approved",
+        "notes": "Southeast US distribution",
+        "lat": 25.7617,
+        "lng": -80.1918
+      },
+      {
+        "id": "sample-4",
+        "name": "Toronto Warehouse",
+        "country": "Canada",
+        "address": "Toronto, ON, Canada",
+        "status": "approved",
+        "notes": "Canadian distribution center",
+        "lat": 43.6532,
+        "lng": -79.3832
+      },
+      {
+        "id": "sample-5",
+        "name": "London Distribution",
+        "country": "UK",
+        "address": "London, UK",
+        "status": "approved",
+        "notes": "European hub",
+        "lat": 51.5074,
+        "lng": -0.1278
+      },
+      {
+        "id": "sample-6",
+        "name": "Singapore Distribution",
+        "country": "Singapore",
+        "address": "Singapore",
+        "status": "approved",
+        "notes": "Southeast Asian hub",
+        "lat": 1.3521,
+        "lng": 103.8198
+      },
+      {
+        "id": "sample-7",
+        "name": "Sydney Warehouse",
+        "country": "Australia",
+        "address": "Sydney, Australia",
+        "status": "approved",
+        "notes": "Australian distribution center",
+        "lat": -33.8688,
+        "lng": 151.2093
+      },
+      {
+        "id": "sample-8",
+        "name": "Berlin Distribution Center",
+        "country": "Germany",
+        "address": "Berlin, Germany",
+        "status": "in-progress",
+        "notes": "Under construction",
+        "lat": 52.5200,
+        "lng": 13.4050
+      },
+      {
+        "id": "sample-9",
+        "name": "Tokyo Logistics",
+        "country": "Japan",
+        "address": "Tokyo, Japan",
+        "status": "in-progress",
+        "notes": "Opening next quarter",
+        "lat": 35.6762,
+        "lng": 139.6503
+      },
+      {
+        "id": "sample-10",
+        "name": "Mexico City Depot",
+        "country": "Mexico",
+        "address": "Mexico City, Mexico",
+        "status": "not-approved",
+        "notes": "Pending regulatory approval",
+        "lat": 19.4326,
+        "lng": -99.1332
+      }
+    ];
+
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      createStars();
+      initMap();
+    });
+
+    function createStars() {
+      // Create stars for header
+      createStarsForContainer('stars-bg', 150);
+
+      // Create stars for search bar
+      createStarsForContainer('search-stars', 50);
+    }
+
+    function createStarsForContainer(containerId, starCount) {
+      const starsContainer = document.getElementById(containerId);
+      if (!starsContainer) return;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Random size
+        const size = Math.random() * 2;
+
+        // Random animation delay
+        const delay = Math.random() * 5;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+
+        starsContainer.appendChild(star);
+      }
+    }
+
+    // Get human-readable status label
+    function getStatusLabel(status) {
+      switch(status) {
+        case 'approved':
+          return 'Approved';
+        case 'in-progress':
+          return 'In Progress';
+        case 'not-approved':
+          return 'Not Approved';
+        default:
+          return 'Unknown';
+      }
+    }
+
+    // Initialize Leaflet Map
+    let map;
+    let markers = [];
+    let circles = [];
+    let searchMarker = null;
+
+    function initMap() {
+      // Create the map centered on the world
+      map = L.map('map').setView([20, 0], 2);
+
+      // Add a more readable tile layer with better contrast
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Add depot markers
+      addDepotMarkers();
+
+      // Set up search functionality
+      setupSearch();
+    }
+
+    function addDepotMarkers() {
+      // Clear existing markers
+      clearMarkers();
+
+      // Add markers for each depot
+      depots.forEach(depot => {
+        // Get marker icon based on status
+        const icon = getMarkerIcon(depot.status);
+
+        // Create marker
+        const marker = L.marker([depot.lat, depot.lng], {
+          title: depot.name,
+          icon: icon
+        }).addTo(map);
+
+        // Create 100-mile radius circle
+        const circle = L.circle([depot.lat, depot.lng], {
+          color: '#FF0000',
+          fillColor: '#FF0000',
+          fillOpacity: 0.05,
+          weight: 1,
+          opacity: 0.3,
+          radius: 160934 // 100 miles in meters
+        }).addTo(map);
+
+        // Create popup content
+        const popupContent = `
+          <div class="info-window">
+            <h3>${depot.name}</h3>
+            <p><strong>Address:</strong> ${depot.address}</p>
+            <p><strong>Status:</strong> <span class="status-${depot.status}">${getStatusLabel(depot.status)}</span></p>
+            ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+          </div>
+        `;
+
+        // Bind popup to marker
+        marker.bindPopup(popupContent);
+
+        // Store marker and circle
+        markers.push(marker);
+        circles.push(circle);
+      });
+    }
+
+    // Get marker icon based on status
+    function getMarkerIcon(status) {
+      let iconUrl;
+
+      switch(status) {
+        case 'approved':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png';
+          break;
+        case 'in-progress':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png';
+          break;
+        case 'not-approved':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+          break;
+        default:
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
+      }
+
+      return L.icon({
+        iconUrl: iconUrl,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
+
+    function clearMarkers() {
+      // Remove all markers from the map
+      markers.forEach(marker => {
+        map.removeLayer(marker);
+      });
+
+      // Remove all circles from the map
+      circles.forEach(circle => {
+        map.removeLayer(circle);
+      });
+
+      // Clear arrays
+      markers = [];
+      circles = [];
+    }
+
+    function setupSearch() {
+      const searchButton = document.getElementById('search-button');
+      const searchInput = document.getElementById('address-input');
+      const searchForm = document.getElementById('search-form');
+
+      // Create a container for search results
+      const searchResultsContainer = document.createElement('div');
+      searchResultsContainer.className = 'search-results';
+      searchResultsContainer.style.display = 'none';
+
+      // Add the container after the search input
+      const searchInputContainer = document.querySelector('.search-input-container');
+      searchInputContainer.style.position = 'relative';
+      searchInputContainer.appendChild(searchResultsContainer);
+
+      // Search button click
+      searchButton.addEventListener('click', performSearch);
+
+      // Form submit
+      searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        performSearch();
+      });
+
+      // Enter key in input
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          performSearch();
+        }
+      });
+
+      // Input change for autocomplete
+      searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length > 2) {
+          // Fetch suggestions from Nominatim
+          fetchAddressSuggestions(query);
+        } else {
+          searchResultsContainer.style.display = 'none';
+        }
+      });
+    }
+
+    // Fetch address suggestions from Nominatim
+    function fetchAddressSuggestions(query) {
+      const searchResultsContainer = document.querySelector('.search-results');
+
+      // Clear previous results
+      searchResultsContainer.innerHTML = '';
+
+      // Fetch from Nominatim
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.length > 0) {
+            // Show results container
+            searchResultsContainer.style.display = 'block';
+
+            // Add each result
+            data.forEach(result => {
+              const resultItem = document.createElement('div');
+              resultItem.className = 'search-result-item';
+              resultItem.textContent = result.display_name;
+
+              // Add click handler
+              resultItem.addEventListener('click', function() {
+                // Set input value
+                document.getElementById('address-input').value = result.display_name;
+
+                // Hide results
+                searchResultsContainer.style.display = 'none';
+
+                // Perform search with this location
+                performSearchWithCoordinates(result.display_name, parseFloat(result.lat), parseFloat(result.lon));
+              });
+
+              searchResultsContainer.appendChild(resultItem);
+            });
+          } else {
+            searchResultsContainer.style.display = 'none';
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching address suggestions:', error);
+          searchResultsContainer.style.display = 'none';
+        });
+    }
+
+    function performSearch() {
+      const input = document.getElementById('address-input').value.trim();
+
+      if (!input) {
+        alert('Please enter a location to search');
+        return;
+      }
+
+      // Show loading indicator
+      document.getElementById('search-button').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+      // Use Nominatim for geocoding
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1`)
+        .then(response => response.json())
+        .then(data => {
+          // Reset search button
+          document.getElementById('search-button').innerHTML = '<i class="fas fa-search"></i>';
+
+          if (data && data.length > 0) {
+            const result = data[0];
+            const formattedAddress = result.display_name;
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+
+            performSearchWithCoordinates(formattedAddress, lat, lon);
+          } else {
+            alert("Location not found. Please try a different search term.");
+          }
+        })
+        .catch(error => {
+          console.error('Error geocoding address:', error);
+          document.getElementById('search-button').innerHTML = '<i class="fas fa-search"></i>';
+          alert("Error searching for location. Please try again.");
+        });
+    }
+
+    function performSearchWithCoordinates(formattedAddress, lat, lon) {
+      // Check if the address is in an embargoed country
+      checkEmbargoedCountry(formattedAddress).then(result => {
+        if (result.isEmbargoed) {
+          // Show embargo warning
+          alert(`We're sorry, but we cannot provide service to ${result.country} due to trade restrictions.`);
+          return;
+        }
+
+        // Center map on the location
+        map.setView([lat, lon], 8);
+
+        // Add a marker for the searched location
+        if (searchMarker) {
+          map.removeLayer(searchMarker);
+        }
+
+        // Create a more visible green marker for the search location
+        const greenIcon = L.icon({
+          iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+          iconSize: [30, 49], // Slightly larger than depot markers
+          iconAnchor: [15, 49],
+          popupAnchor: [1, -40],
+          shadowSize: [41, 41]
+        });
+
+        searchMarker = L.marker([lat, lon], {
+          title: "Searched Location",
+          icon: greenIcon
+        }).addTo(map);
+
+        // Find nearby depots (within 100 miles)
+        const nearbyDepots = findNearbyDepots(lat, lon, 100);
+
+        // Show info about nearby depots
+        let popupContent;
+        if (nearbyDepots.length > 0) {
+          popupContent = `<div class="info-window">
+            <h3>Search Results</h3>
+            <p>Found ${nearbyDepots.length} depot(s) within 100 miles:</p>
+            <ul>`;
+
+          nearbyDepots.forEach(depot => {
+            popupContent += `<li>${depot.name} (${Math.round(depot.distance)} miles)</li>`;
+          });
+
+          popupContent += `</ul></div>`;
+        } else {
+          popupContent = `<div class="info-window">
+            <h3>Search Results</h3>
+            <p>No depots found within 100 miles of this location.</p>
+          </div>`;
+        }
+
+        searchMarker.bindPopup(popupContent).openPopup();
+      });
+    }
+
+    function findNearbyDepots(lat, lng, radiusMiles) {
+      return depots.map(depot => {
+        // Calculate distance using Haversine formula
+        const distance = calculateDistance(lat, lng, depot.lat, depot.lng);
+        return {
+          ...depot,
+          distance
+        };
+      }).filter(depot => depot.distance <= radiusMiles)
+        .sort((a, b) => a.distance - b.distance);
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 3958.8; // Earth's radius in miles
+      const dLat = toRadians(lat2 - lat1);
+      const dLon = toRadians(lon2 - lon1);
+      const a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c;
+      return distance;
+    }
+
+    function toRadians(degrees) {
+      return degrees * Math.PI / 180;
+    }
+
+    // Check if an address is in an embargoed country
+    async function checkEmbargoedCountry(address) {
+      // Extract country from address
+      const addressParts = address.split(',');
+      const countryPart = addressParts[addressParts.length - 1].trim();
+
+      // Check if the country is in the embargoed list
+      const isEmbargoed = embargoedCountries.some(country => {
+        return countryPart.toLowerCase().includes(country.toLowerCase());
+      });
+
+      // If we couldn't determine from the address, try using Nominatim
+      if (!isEmbargoed && addressParts.length < 2) {
+        try {
+          // Use Nominatim to get country information
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+          const data = await response.json();
+
+          if (data && data.length > 0) {
+            // Check if there's country information
+            const result = data[0];
+            if (result.address && result.address.country) {
+              const country = result.address.country;
+              const isCountryEmbargoed = embargoedCountries.some(embargoedCountry => {
+                return country.toLowerCase().includes(embargoedCountry.toLowerCase());
+              });
+
+              return { isEmbargoed: isCountryEmbargoed, country };
+            }
+          }
+        } catch (error) {
+          console.error('Error in geocoding:', error);
+        }
+      }
+
+      return { isEmbargoed, country: countryPart };
+    }
+  </script>
+
+</body>
+</html>

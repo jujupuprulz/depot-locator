@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Depot Data Migration Tool</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f5f7fa;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    
+    .status-box {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #eaf2f8;
+      border-left: 4px solid #3498db;
+    }
+    
+    .status-success {
+      background-color: #d4edda;
+      border-left-color: #28a745;
+      color: #155724;
+    }
+    
+    .status-error {
+      background-color: #f8d7da;
+      border-left-color: #dc3545;
+      color: #721c24;
+    }
+    
+    .status-warning {
+      background-color: #fff3cd;
+      border-left-color: #ffc107;
+      color: #856404;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    .log-container {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: monospace;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    
+    .log-info {
+      color: #0c5460;
+    }
+    
+    .log-error {
+      color: #721c24;
+    }
+    
+    .log-success {
+      color: #155724;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Depot Data Migration Tool</h1>
+    
+    <p>This tool will migrate your depot data from localStorage to Supabase database.</p>
+    
+    <div id="status" class="status-box">
+      Ready to migrate data. Click the button below to start.
+    </div>
+    
+    <button id="migrate-button">Migrate Data to Supabase</button>
+    
+    <div id="log-container" class="log-container" style="display: none;">
+      <div id="log"></div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { initSupabase, saveDepotToSupabase } from './supabase-client.js';
+    
+    // Override console.log to capture in our log container
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    
+    console.log = function() {
+      // Call the original console.log
+      originalConsoleLog.apply(console, arguments);
+      
+      // Add to our log container
+      const logContainer = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry log-info';
+      entry.textContent = Array.from(arguments).join(' ');
+      logContainer.appendChild(entry);
+      
+      // Auto-scroll to bottom
+      logContainer.scrollTop = logContainer.scrollHeight;
+    };
+    
+    console.error = function() {
+      // Call the original console.error
+      originalConsoleError.apply(console, arguments);
+      
+      // Add to our log container
+      const logContainer = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry log-error';
+      entry.textContent = Array.from(arguments).join(' ');
+      logContainer.appendChild(entry);
+      
+      // Auto-scroll to bottom
+      logContainer.scrollTop = logContainer.scrollHeight;
+    };
+    
+    // Function to migrate data
+    async function migrateDepotsToSupabase() {
+      console.log('Starting migration of depots from localStorage to Supabase...');
+      
+      try {
+        // Show log container
+        document.getElementById('log-container').style.display = 'block';
+        
+        // Update status
+        const statusElement = document.getElementById('status');
+        statusElement.className = 'status-box';
+        statusElement.innerHTML = '<div class="spinner" style="display: inline-block; width: 16px; height: 16px; border: 2px solid #3498db; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite;"></div> Migration in progress...';
+        
+        // Initialize Supabase client
+        await initSupabase();
+        
+        // Get depots from localStorage
+        const storedDepots = localStorage.getItem('depots');
+        if (!storedDepots) {
+          console.log('No depots found in localStorage to migrate');
+          updateStatus('warning', 'No depots found in localStorage to migrate');
+          return { success: false, message: 'No depots found in localStorage' };
+        }
+        
+        // Parse depots
+        const depots = JSON.parse(storedDepots);
+        console.log(`Found ${depots.length} depots in localStorage for migration`);
+        
+        // Track migration results
+        const results = {
+          total: depots.length,
+          migrated: [],
+          failed: []
+        };
+        
+        // Migrate each depot
+        for (const depot of depots) {
+          try {
+            // Ensure ID is a string
+            depot.id = String(depot.id);
+            
+            // Save to Supabase
+            const savedDepot = await saveDepotToSupabase(depot);
+            console.log(`Migrated depot: ${depot.name} (ID: ${depot.id})`);
+            results.migrated.push(savedDepot);
+          } catch (error) {
+            console.error(`Failed to migrate depot ${depot.name} (ID: ${depot.id}):`, error);
+            results.failed.push({ depot, error: error.message });
+          }
+        }
+        
+        // Log results
+        console.log('Migration completed:');
+        console.log(`- Total: ${results.total}`);
+        console.log(`- Migrated: ${results.migrated.length}`);
+        console.log(`- Failed: ${results.failed.length}`);
+        
+        // Update status
+        if (results.failed.length === 0) {
+          updateStatus('success', `Migration successful! ${results.migrated.length} depots migrated.`);
+        } else {
+          updateStatus('warning', `Migration completed with issues: ${results.migrated.length} migrated, ${results.failed.length} failed.`);
+        }
+        
+        return {
+          success: results.failed.length === 0,
+          message: `Migration completed: ${results.migrated.length} migrated, ${results.failed.length} failed`,
+          results
+        };
+      } catch (error) {
+        console.error('Error during migration:', error);
+        updateStatus('error', `Migration error: ${error.message}`);
+        return { success: false, message: `Migration error: ${error.message}`, error };
+      }
+    }
+    
+    // Function to update status
+    function updateStatus(type, message) {
+      const statusElement = document.getElementById('status');
+      statusElement.className = `status-box status-${type}`;
+      statusElement.textContent = message;
+    }
+    
+    // Set up event listener for the migrate button
+    document.getElementById('migrate-button').addEventListener('click', async () => {
+      try {
+        // Disable the button during migration
+        const button = document.getElementById('migrate-button');
+        button.disabled = true;
+        button.textContent = 'Migration in progress...';
+        
+        // Run the migration
+        await migrateDepotsToSupabase();
+      } catch (error) {
+        console.error('Unexpected error:', error);
+        updateStatus('error', `Unexpected error: ${error.message}`);
+      } finally {
+        // Re-enable the button
+        const button = document.getElementById('migrate-button');
+        button.disabled = false;
+        button.textContent = 'Migrate Data to Supabase';
+      }
+    });
+    
+    // Add CSS for spinner animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>

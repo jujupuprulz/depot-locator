@@ -1,0 +1,1 @@
+# Depot Locator Tools\n\nThis directory contains tools for managing and migrating depot data.\n\n## Tools\n\n- migrate-depots-enhanced.html - Enhanced tool for migrating data from localStorage to Supabase\n- migrate-depots.html - Original migration tool\n- migrate-depots.js - JavaScript functionality for the migration tool

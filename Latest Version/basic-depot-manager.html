@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Depot Manager</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""/>
+  <!-- Leaflet JavaScript -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin=""></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Exo 2', sans-serif;
+      background-color: #0a0e1a;
+      color: #e0e0ff;
+    }
+
+    /* Space Banner */
+    .space-banner {
+      background: linear-gradient(135deg, #0f1b33 0%, #1a2a4a 50%, #0f1b33 100%);
+      color: #e0e0ff;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0;
+      animation: twinkle 5s infinite;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    .banner-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      background: linear-gradient(135deg, #1a2a4a 0%, #0f1b33 100%);
+      border-radius: 50%;
+      position: relative;
+      box-shadow: 0 0 15px rgba(100, 150, 255, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 2px solid rgba(100, 150, 255, 0.3);
+    }
+
+    .logo-orbit {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      border-top: 2px solid rgba(100, 150, 255, 0.8);
+      border-left: 2px solid rgba(100, 150, 255, 0.4);
+      border-right: 2px solid rgba(100, 150, 255, 0.4);
+      animation: orbit-spin 8s linear infinite;
+    }
+
+    @keyframes orbit-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .logo-planet {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(100, 150, 255, 0.7);
+    }
+
+    .logo-rocket-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      animation: logo-rocket-orbit 5s linear infinite;
+    }
+
+    @keyframes logo-rocket-orbit {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .logo-rocket {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 10px;
+      height: 16px;
+    }
+
+    .logo-rocket-body {
+      position: absolute;
+      width: 8px;
+      height: 12px;
+      background: white;
+      border-radius: 4px 4px 2px 2px;
+      top: 2px;
+      left: 1px;
+    }
+
+    .logo-rocket-window {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #74c0fc;
+      border-radius: 50%;
+      top: 5px;
+      left: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .logo-rocket-fins {
+      position: absolute;
+      width: 10px;
+      height: 6px;
+      bottom: 0;
+      left: 0;
+      background: transparent;
+    }
+
+    .logo-rocket-fins::before,
+    .logo-rocket-fins::after {
+      content: '';
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #ff6b6b;
+      bottom: 2px;
+    }
+
+    .logo-rocket-fins::before {
+      left: -2px;
+      transform: skewY(30deg);
+    }
+
+    .logo-rocket-fins::after {
+      right: -2px;
+      transform: skewY(-30deg);
+    }
+
+    .logo-rocket-flames {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: linear-gradient(to bottom, #ffa94d, transparent);
+      border-radius: 0 0 50% 50%;
+      bottom: -4px;
+      left: 2px;
+      opacity: 0.8;
+      animation: logo-flame-flicker 0.5s infinite alternate;
+    }
+
+    @keyframes logo-flame-flicker {
+      0% { height: 5px; opacity: 0.7; }
+      100% { height: 7px; opacity: 0.9; }
+    }
+
+    .logo-text h1 {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 24px;
+      color: #a0a0ff;
+      text-shadow: 0 0 10px rgba(100, 150, 255, 0.7);
+    }
+
+    .logo-text p {
+      margin: 5px 0 0 0;
+      font-size: 14px;
+      color: #a0a0ff;
+      opacity: 0.8;
+    }
+
+    .nav-button {
+      color: #e0e0ff;
+      text-decoration: none;
+      padding: 0.7rem 1.2rem;
+      border-radius: 4px;
+      background: rgba(100, 150, 255, 0.15);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      font-weight: 500;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.2);
+      font-family: 'Exo 2', sans-serif;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .nav-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: all 0.5s ease;
+    }
+
+    .nav-button:hover {
+      background: rgba(100, 150, 255, 0.25);
+      border-color: rgba(100, 150, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 50, 255, 0.3);
+    }
+
+    .nav-button:hover::before {
+      left: 100%;
+    }
+
+    /* Action Button */
+    .action-button {
+      background: linear-gradient(135deg, #3060ff, #6090ff);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-button:hover {
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #0f1b33 0%, #1a2a4a 50%, #0f1b33 100%);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 20px rgba(0, 50, 255, 0.3);
+      position: relative;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      background-image: radial-gradient(circle, rgba(100, 150, 255, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .modal-stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .modal h2, .modal p, .modal label, .modal form {
+      position: relative;
+      z-index: 1;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      color: #a0a0ff;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .close-button:hover {
+      color: #e0e0ff;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      color: #a0a0ff;
+      font-family: 'Orbitron', sans-serif;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+
+    .left-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .right-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .save-button {
+      background: linear-gradient(135deg, #3060ff, #6090ff);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .save-button:hover {
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .cancel-button {
+      background-color: rgba(100, 100, 100, 0.3);
+      color: #e0e0ff;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .cancel-button:hover {
+      background-color: rgba(100, 100, 100, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .form-delete-button {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-delete-button:hover {
+      background: linear-gradient(135deg, #ff6b6b, #e74c3c);
+      transform: translateY(-2px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Main Content */
+    .main-content {
+      display: flex;
+      padding: 20px;
+      gap: 20px;
+      height: calc(100vh - 120px);
+    }
+
+    /* Depot List */
+    .depot-list-container {
+      flex: 0 0 300px;
+      background-color: rgba(15, 25, 50, 0.7);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+      margin-right: 15px;
+      height: 100%;
+    }
+
+
+
+    .depot-list-header {
+      background-color: rgba(48, 96, 255, 0.2);
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .list-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .depot-list-title {
+      margin: 0;
+      color: #a0a0ff;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .control-button {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      background-color: rgba(15, 25, 50, 0.7);
+      color: #a0a0ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .control-button:hover {
+      background-color: rgba(48, 96, 255, 0.3);
+      color: #e0e0ff;
+      transform: translateY(-2px);
+    }
+
+    .depot-list {
+      list-style: none;
+      padding: 15px;
+      margin: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .depot-item {
+      background-color: rgba(15, 25, 50, 0.5);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      padding: 15px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      transition: all 0.3s;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .depot-item[style*="display: none"] {
+      margin: 0;
+      padding: 0;
+      border: none;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .depot-item:hover {
+      background-color: rgba(48, 96, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .depot-content {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .depot-item h3 {
+      margin-top: 0;
+      margin-bottom: 5px;
+      color: #a0a0ff;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .depot-item p {
+      margin: 5px 0;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .depot-actions {
+      display: flex;
+      gap: 5px;
+      margin-left: 10px;
+    }
+
+    .edit-button, .delete-button {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      background-color: rgba(15, 25, 50, 0.7);
+      color: #a0a0ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .edit-button:hover {
+      background-color: rgba(48, 96, 255, 0.3);
+      color: #e0e0ff;
+      transform: translateY(-2px);
+    }
+
+    .delete-button {
+      color: #ff9090;
+    }
+
+    .delete-button:hover {
+      background-color: rgba(255, 70, 70, 0.2);
+      color: #ff6060;
+      transform: translateY(-2px);
+    }
+
+    .status-approved {
+      color: #3498db;
+    }
+
+    .status-in-progress {
+      color: #f39c12;
+    }
+
+    .status-not-approved {
+      color: #e74c3c;
+    }
+
+    .depot-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 5px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .depot-section-header:hover {
+      background-color: rgba(48, 96, 255, 0.1);
+    }
+
+    .depot-section-header:first-child {
+      margin-top: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title i {
+      font-size: 1.2rem;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      font-family: 'Exo 2', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    .section-toggle {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.7;
+      transition: all 0.2s;
+    }
+
+    .section-toggle:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+
+    .depot-section-header.status-approved {
+      color: #3498db;
+    }
+
+    .depot-section-header.status-in-progress {
+      color: #f39c12;
+    }
+
+    .depot-section-header.status-not-approved {
+      color: #e74c3c;
+    }
+
+    /* Status styles for popups */
+    .status-approved {
+      color: #3498db;
+      font-weight: bold;
+    }
+
+    .status-in-progress {
+      color: #f39c12;
+      font-weight: bold;
+    }
+
+    .status-not-approved {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #a0a0ff;
+      font-weight: 500;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      background-color: rgba(15, 25, 50, 0.5);
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.1) inset;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: rgba(100, 150, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 50, 255, 0.2) inset;
+      outline: none;
+    }
+
+    .address-search-container {
+      display: flex;
+      gap: 5px;
+      position: relative;
+    }
+
+    .address-search-container input {
+      flex: 1;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.1) inset;
+      transition: all 0.3s ease;
+    }
+
+    .address-search-container input:focus {
+      border-color: rgba(100, 150, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 50, 255, 0.2) inset;
+      outline: none;
+    }
+
+    .search-button {
+      background: linear-gradient(135deg, #3060ff, #6090ff);
+      color: white;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      border-radius: 4px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.2);
+    }
+
+    .search-button:hover {
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 50, 255, 0.3);
+      border-color: rgba(100, 150, 255, 0.5);
+    }
+
+    /* Success Message */
+    .success-message {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(46, 204, 113, 0.9);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 2000;
+      animation: slide-in 0.5s ease-out;
+      font-family: 'Exo 2', sans-serif;
+    }
+
+    .delete-message {
+      background: rgba(231, 76, 60, 0.9);
+    }
+
+    .success-message i {
+      font-size: 1.5rem;
+    }
+
+    .success-message.fade-out {
+      animation: fade-out 0.5s ease-in forwards;
+    }
+
+    @keyframes slide-in {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fade-out {
+      from { transform: translateX(0); opacity: 1; }
+      to { transform: translateX(100%); opacity: 0; }
+    }
+
+    /* Search results styles */
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: rgba(15, 25, 50, 0.95);
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .search-result-item {
+      padding: 8px 10px;
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.2);
+    }
+
+    .search-result-item:hover {
+      background-color: rgba(30, 40, 70, 0.95);
+    }
+
+    .search-result-item:last-child {
+      border-bottom: none;
+    }
+
+    /* Map Container */
+    .map-container {
+      flex: 1;
+      background-color: rgba(15, 25, 50, 0.7);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .map-header {
+      background-color: rgba(48, 96, 255, 0.2);
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+    }
+
+    .map-title {
+      margin: 0;
+      color: #a0a0ff;
+      font-size: 18px;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    .map-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .map-control {
+      background: none;
+      border: none;
+      color: #a0a0ff;
+      cursor: pointer;
+      font-size: 16px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .map-control:hover {
+      background-color: rgba(100, 150, 255, 0.2);
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100% - 41px);
+      flex: 1;
+      z-index: 1;
+    }
+
+    .minimized #map {
+      display: none;
+    }
+
+    .maximized {
+      position: fixed;
+      top: 100px;
+      left: 20px;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1000;
+    }
+
+    .maximized #map {
+      height: calc(100% - 41px);
+    }
+
+    /* Leaflet specific styles */
+    .leaflet-popup-content-wrapper {
+      background: rgba(30, 40, 70, 0.95);
+      color: #ffffff;
+      border-radius: 8px;
+      border: 1px solid rgba(100, 150, 255, 0.5);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+    }
+
+    .leaflet-popup-tip {
+      background: rgba(30, 40, 70, 0.95);
+      border: 1px solid rgba(100, 150, 255, 0.5);
+    }
+
+    .leaflet-popup-content h3 {
+      color: #4d90fe;
+      font-family: 'Orbitron', sans-serif;
+      margin-top: 0;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .leaflet-popup-content p {
+      margin: 8px 0;
+      font-weight: 500;
+    }
+
+    .leaflet-popup-content strong {
+      color: #a0d0ff;
+    }
+
+    /* Info window styles */
+    .info-window {
+      color: #ffffff;
+      font-family: 'Exo 2', sans-serif;
+    }
+
+    .info-window h3 {
+      margin-top: 0;
+      font-family: 'Orbitron', sans-serif;
+      color: #4d90fe;
+      font-weight: bold;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-window p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- Space Banner -->
+  <div class="space-banner">
+    <div class="stars" id="stars"></div>
+    <div class="banner-content">
+      <div class="logo">
+        <div class="logo-icon">
+          <div class="logo-orbit">
+            <div class="logo-planet"></div>
+          </div>
+          <div class="logo-rocket-container">
+            <div class="logo-rocket">
+              <div class="logo-rocket-body"></div>
+              <div class="logo-rocket-window"></div>
+              <div class="logo-rocket-fins"></div>
+              <div class="logo-rocket-flames"></div>
+            </div>
+          </div>
+        </div>
+        <div class="logo-text">
+          <h1>Depot Manager</h1>
+          <p>Administration Console</p>
+        </div>
+      </div>
+      <a href="space-banner-google-maps.html" class="nav-button">
+        <i class="fas fa-rocket"></i> Back to Depot Locator
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Depot List -->
+    <div class="depot-list-container">
+      <div class="depot-list-header">
+        <h2 class="depot-list-title">Depot List</h2>
+        <div class="list-controls">
+          <button id="add-depot-button" class="action-button">
+            <i class="fas fa-plus"></i> Add Depot
+          </button>
+
+        </div>
+      </div>
+      <ul class="depot-list" id="depot-list">
+        <!-- Depot items will be added here dynamically -->
+      </ul>
+    </div>
+
+    <!-- Map Container -->
+    <div class="map-container" id="map-container">
+      <div class="map-header">
+        <h2 class="map-title">Map View</h2>
+        <div class="map-controls">
+          <button class="map-control" id="minimize-btn" title="Minimize">
+            <i class="fas fa-minus"></i>
+          </button>
+          <button class="map-control" id="maximize-btn" title="Maximize">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </div>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script>
+    // Sample depot data
+    let depots = [
+      // North America
+      {
+        id: 1,
+        name: "Seattle Distribution Center",
+        address: "Seattle, WA, USA",
+        status: "approved",
+        notes: "Pacific Northwest hub",
+        lat: 47.6062,
+        lng: -122.3321
+      },
+      {
+        id: 2,
+        name: "New York Logistics",
+        address: "New York, NY, USA",
+        status: "approved",
+        notes: "East Coast operations",
+        lat: 40.7128,
+        lng: -74.0060
+      },
+      {
+        id: 3,
+        name: "Toronto Warehouse",
+        address: "Toronto, Canada",
+        status: "approved",
+        notes: "Canadian distribution center",
+        lat: 43.6532,
+        lng: -79.3832
+      },
+      {
+        id: 4,
+        name: "Mexico City Hub",
+        address: "Mexico City, Mexico",
+        status: "in-progress",
+        notes: "Central American operations",
+        lat: 19.4326,
+        lng: -99.1332
+      },
+
+      // South America
+      {
+        id: 5,
+        name: "São Paulo Distribution",
+        address: "São Paulo, Brazil",
+        status: "approved",
+        notes: "South American headquarters",
+        lat: -23.5505,
+        lng: -46.6333
+      },
+      {
+        id: 6,
+        name: "Buenos Aires Depot",
+        address: "Buenos Aires, Argentina",
+        status: "in-progress",
+        notes: "Southern cone operations",
+        lat: -34.6037,
+        lng: -58.3816
+      },
+
+      // Europe
+      {
+        id: 7,
+        name: "London Distribution",
+        address: "London, UK",
+        status: "approved",
+        notes: "European headquarters",
+        lat: 51.5074,
+        lng: -0.1278
+      },
+      {
+        id: 8,
+        name: "Berlin Distribution Center",
+        address: "Berlin, Germany",
+        status: "in-progress",
+        notes: "Central European hub",
+        lat: 52.5200,
+        lng: 13.4050
+      },
+      {
+        id: 9,
+        name: "Paris Logistics",
+        address: "Paris, France",
+        status: "approved",
+        notes: "Western European operations",
+        lat: 48.8566,
+        lng: 2.3522
+      },
+
+      // Asia
+      {
+        id: 10,
+        name: "Tokyo Logistics",
+        address: "Tokyo, Japan",
+        status: "in-progress",
+        notes: "East Asian headquarters",
+        lat: 35.6762,
+        lng: 139.6503
+      },
+      {
+        id: 11,
+        name: "Shanghai Distribution",
+        address: "Shanghai, China",
+        status: "approved",
+        notes: "Chinese operations center",
+        lat: 31.2304,
+        lng: 121.4737
+      },
+      {
+        id: 12,
+        name: "Mumbai Warehouse",
+        address: "Mumbai, India",
+        status: "not-approved",
+        notes: "South Asian operations",
+        lat: 19.0760,
+        lng: 72.8777
+      },
+      {
+        id: 13,
+        name: "Singapore Hub",
+        address: "Singapore",
+        status: "approved",
+        notes: "Southeast Asian headquarters",
+        lat: 1.3521,
+        lng: 103.8198
+      },
+
+      // Africa
+      {
+        id: 14,
+        name: "Cairo Distribution",
+        address: "Cairo, Egypt",
+        status: "in-progress",
+        notes: "North African operations",
+        lat: 30.0444,
+        lng: 31.2357
+      },
+      {
+        id: 15,
+        name: "Lagos Warehouse",
+        address: "Lagos, Nigeria",
+        status: "not-approved",
+        notes: "West African hub",
+        lat: 6.5244,
+        lng: 3.3792
+      },
+      {
+        id: 16,
+        name: "Cape Town Logistics",
+        address: "Cape Town, South Africa",
+        status: "approved",
+        notes: "Southern African headquarters",
+        lat: -33.9249,
+        lng: 18.4241
+      },
+
+      // Australia/Oceania
+      {
+        id: 17,
+        name: "Sydney Warehouse",
+        address: "Sydney, Australia",
+        status: "approved",
+        notes: "Australian headquarters",
+        lat: -33.8688,
+        lng: 151.2093
+      },
+      {
+        id: 18,
+        name: "Auckland Distribution",
+        address: "Auckland, New Zealand",
+        status: "approved",
+        notes: "New Zealand operations",
+        lat: -36.8509,
+        lng: 174.7645
+      },
+
+      // Antarctica
+      {
+        id: 19,
+        name: "McMurdo Research Station",
+        address: "McMurdo Station, Antarctica",
+        status: "in-progress",
+        notes: "Polar research support",
+        lat: -77.8419,
+        lng: 166.6863
+      }
+    ];
+
+    // List of embargoed countries
+    const embargoedCountries = [
+      'Cuba',
+      'Iran',
+      'North Korea',
+      'Syria',
+      'Russia',
+      'Belarus',
+      'Venezuela',
+      'Myanmar',
+      'Afghanistan'
+    ];
+
+    // Current depot being edited
+    let currentDepotId = null;
+
+    // Initialize when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      createStars();
+      renderDepotList();
+      setupMapControls();
+      setupEventListeners();
+    });
+
+    // Set up event listeners
+    function setupEventListeners() {
+
+      // Add depot button
+      document.getElementById('add-depot-button').addEventListener('click', function() {
+        openDepotModal();
+      });
+
+      // Close modal buttons
+      document.getElementById('close-modal').addEventListener('click', closeDepotModal);
+      document.getElementById('cancel-button').addEventListener('click', closeDepotModal);
+      document.getElementById('close-confirm-modal').addEventListener('click', closeConfirmModal);
+      document.getElementById('cancel-delete').addEventListener('click', closeConfirmModal);
+
+      // Delete button in depot modal
+      document.getElementById('delete-button').addEventListener('click', function() {
+        if (currentDepotId) {
+          openConfirmModal(currentDepotId);
+        }
+      });
+
+      // Confirm delete button
+      document.getElementById('confirm-delete').addEventListener('click', function() {
+        deleteDepot(currentDepotId);
+        closeConfirmModal();
+        closeDepotModal();
+      });
+
+      // Form submission
+      document.getElementById('depot-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveDepot();
+      });
+
+      // Address search button
+      document.getElementById('search-address-button').addEventListener('click', function() {
+        searchAddress();
+      });
+
+      // Prevent form submission when pressing Enter in any field except the notes textarea
+      document.getElementById('depot-form').addEventListener('keydown', function(e) {
+        // Check if the key pressed is Enter and the element is not the textarea or a button
+        if (e.key === 'Enter' &&
+            e.target.tagName !== 'TEXTAREA' &&
+            e.target.tagName !== 'BUTTON') {
+          e.preventDefault();
+
+          // If it's the address field, trigger the address search
+          if (e.target.id === 'depot-address') {
+            searchAddress();
+          }
+        }
+      });
+    }
+
+    // Open the depot modal for adding or editing
+    function openDepotModal(depot = null) {
+      const form = document.getElementById('depot-form');
+      const modalTitle = document.getElementById('modal-title');
+      const deleteButton = document.getElementById('delete-button');
+
+      // Refresh stars in the modal
+      const starsContainer = document.querySelector('#depot-modal .modal-stars');
+      starsContainer.innerHTML = '';
+      createModalStars();
+
+      // Reset the form
+      form.reset();
+
+      if (depot) {
+        // Editing existing depot
+        modalTitle.textContent = 'Edit Depot';
+        document.getElementById('depot-id').value = depot.id;
+        document.getElementById('depot-name').value = depot.name;
+        document.getElementById('depot-address').value = depot.address;
+        document.getElementById('depot-status').value = depot.status;
+        document.getElementById('depot-lat').value = depot.lat;
+        document.getElementById('depot-lng').value = depot.lng;
+        document.getElementById('depot-notes').value = depot.notes || '';
+
+        deleteButton.style.display = 'block';
+        currentDepotId = depot.id;
+      } else {
+        // Adding new depot
+        modalTitle.textContent = 'Add New Depot';
+        document.getElementById('depot-id').value = '';
+        deleteButton.style.display = 'none';
+        currentDepotId = null;
+      }
+
+      // Show the modal
+      document.getElementById('depot-modal').classList.add('show');
+    }
+
+    // Close the depot modal
+    function closeDepotModal() {
+      document.getElementById('depot-modal').classList.remove('show');
+    }
+
+    // Open the confirmation modal
+    function openConfirmModal(depotId) {
+      currentDepotId = depotId;
+
+      // Refresh stars in the modal
+      const starsContainer = document.querySelector('#confirm-modal .modal-stars');
+      starsContainer.innerHTML = '';
+      createModalStars();
+
+      document.getElementById('confirm-modal').classList.add('show');
+    }
+
+    // Close the confirmation modal
+    function closeConfirmModal() {
+      document.getElementById('confirm-modal').classList.remove('show');
+    }
+
+    // Save a depot (add or update)
+    async function saveDepot() {
+      const id = document.getElementById('depot-id').value;
+      const name = document.getElementById('depot-name').value;
+      const address = document.getElementById('depot-address').value;
+      const status = document.getElementById('depot-status').value;
+      const notes = document.getElementById('depot-notes').value;
+
+      // Check if the address is in an embargoed country
+      const embargoResult = await checkEmbargoedCountry(address);
+      if (embargoResult.isEmbargoed) {
+        alert(`We cannot add a depot in ${embargoResult.country} due to trade restrictions.`);
+        return;
+      }
+
+      // Check if notes were added or changed
+      let shouldSendEmail = false;
+      let oldNotes = '';
+
+      if (id) {
+        // For existing depot, check if notes changed
+        const existingDepot = depots.find(d => d.id == id);
+        if (existingDepot) {
+          oldNotes = existingDepot.notes || '';
+          if (notes && notes !== oldNotes) {
+            shouldSendEmail = true;
+          }
+        }
+      } else {
+        // For new depot, check if notes were added
+        if (notes) {
+          shouldSendEmail = true;
+        }
+      }
+
+      if (id) {
+        // Update existing depot
+        const index = depots.findIndex(d => d.id == id);
+        if (index !== -1) {
+          // Keep the existing lat/lng
+          const lat = depots[index].lat;
+          const lng = depots[index].lng;
+
+          depots[index] = {
+            ...depots[index],
+            name,
+            address,
+            status,
+            lat,
+            lng,
+            notes
+          };
+        }
+      } else {
+        // Add new depot - use a default location if adding new
+        const newId = depots.length > 0 ? Math.max(...depots.map(d => d.id)) + 1 : 1;
+
+        // Generate a random location near the center of the map if no coordinates provided
+        const lat = 20 + (Math.random() * 20 - 10);
+        const lng = (Math.random() * 40 - 20);
+
+        depots.push({
+          id: newId,
+          name,
+          address,
+          status,
+          lat,
+          lng,
+          notes
+        });
+      }
+
+      // Update the map and list
+      clearMapOverlays();
+      depots.forEach(depot => {
+        addMarker(depot);
+      });
+      renderDepotList();
+
+      // Show a success message
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message';
+      successMessage.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        ${id ? 'Depot updated successfully!' : 'New depot added successfully!'}
+      `;
+      document.body.appendChild(successMessage);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        successMessage.classList.add('fade-out');
+        setTimeout(() => {
+          document.body.removeChild(successMessage);
+        }, 500);
+      }, 2500);
+
+      // Send email notification if notes were added or changed
+      if (shouldSendEmail) {
+        sendEmailNotification(name, notes, id ? 'updated' : 'added');
+      }
+
+      // Close the modal
+      closeDepotModal();
+    }
+
+    // Delete a depot
+    function deleteDepot(id) {
+      // Find the depot name before deleting it
+      const depotName = depots.find(d => d.id == id)?.name || 'Depot';
+
+      // Remove the depot from the array
+      depots = depots.filter(d => d.id != id);
+
+      // Update the map and list
+      clearMapOverlays();
+      depots.forEach(depot => {
+        addMarker(depot);
+      });
+      renderDepotList();
+
+      // Show a success message
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message delete-message';
+      successMessage.innerHTML = `
+        <i class="fas fa-trash-alt"></i>
+        ${depotName} has been deleted
+      `;
+      document.body.appendChild(successMessage);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        successMessage.classList.add('fade-out');
+        setTimeout(() => {
+          document.body.removeChild(successMessage);
+        }, 500);
+      }, 2500);
+    }
+
+    // Clear all markers from the map
+    function clearMapOverlays() {
+      markers.forEach(marker => {
+        map.removeLayer(marker);
+      });
+      markers = [];
+    }
+
+    // Create stars for the space banner
+    function createStars() {
+      const starsContainer = document.getElementById('stars');
+      const starCount = 50;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Random size
+        const size = Math.random() * 2;
+
+        // Random animation delay
+        const delay = Math.random() * 5;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+
+        starsContainer.appendChild(star);
+      }
+    }
+
+    // Render the depot list
+    function renderDepotList() {
+      const depotList = document.getElementById('depot-list');
+      depotList.innerHTML = ''; // Clear existing items
+
+      // Group depots by status
+      const groupedDepots = {
+        approved: depots.filter(d => d.status === 'approved'),
+        inProgress: depots.filter(d => d.status === 'in-progress'),
+        notApproved: depots.filter(d => d.status === 'not-approved')
+      };
+
+      // Create status sections
+      const statusSections = [
+        { status: 'approved', label: 'Approved', icon: 'fa-check-circle', depots: groupedDepots.approved },
+        { status: 'in-progress', label: 'In Progress', icon: 'fa-clock', depots: groupedDepots.inProgress },
+        { status: 'not-approved', label: 'Not Approved', icon: 'fa-times-circle', depots: groupedDepots.notApproved }
+      ];
+
+      // Create each status section
+      statusSections.forEach(section => {
+        if (section.depots.length === 0) return; // Skip empty sections
+
+        // Create section header
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = `depot-section-header status-${section.status}`;
+
+        // Create section title with icon
+        const sectionTitle = document.createElement('div');
+        sectionTitle.className = 'section-title';
+        sectionTitle.innerHTML = `
+          <i class="fas ${section.icon}"></i>
+          <h3>${section.label} (${section.depots.length})</h3>
+        `;
+
+        // Create toggle button
+        const toggleButton = document.createElement('button');
+        toggleButton.className = 'section-toggle';
+        toggleButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        toggleButton.title = 'Expand';
+
+        // Add click event to toggle section
+        sectionHeader.addEventListener('click', function() {
+          const depotItems = document.querySelectorAll(`.depot-item[data-status="${section.status}"]`);
+          const isMinimized = toggleButton.title === 'Expand';
+
+          depotItems.forEach(item => {
+            item.style.display = isMinimized ? 'flex' : 'none';
+          });
+
+          toggleButton.innerHTML = isMinimized ?
+            '<i class="fas fa-chevron-down"></i>' :
+            '<i class="fas fa-chevron-right"></i>';
+          toggleButton.title = isMinimized ? 'Minimize' : 'Expand';
+        });
+
+        // Add elements to section header
+        sectionHeader.appendChild(sectionTitle);
+        sectionHeader.appendChild(toggleButton);
+        depotList.appendChild(sectionHeader);
+
+        // Create depot items for this section
+        section.depots.forEach(depot => {
+          const listItem = document.createElement('li');
+          listItem.className = 'depot-item';
+          listItem.setAttribute('data-status', section.status);
+          listItem.style.display = 'none'; // Hide by default
+
+          // Create the main content div
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'depot-content';
+          contentDiv.innerHTML = `
+            <h3>${depot.name}</h3>
+            <p><strong>Address:</strong> ${depot.address}</p>
+            ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+          `;
+
+          // Add click event to center map on this depot
+          contentDiv.addEventListener('click', function() {
+            centerMapOnDepot(depot);
+          });
+
+          // Create the actions div
+          const actionsDiv = document.createElement('div');
+          actionsDiv.className = 'depot-actions';
+
+          // Create edit button
+          const editButton = document.createElement('button');
+          editButton.className = 'edit-button';
+          editButton.innerHTML = '<i class="fas fa-edit"></i>';
+          editButton.title = 'Edit Depot';
+          editButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering the parent click event
+            openDepotModal(depot);
+          });
+
+          // Create delete button
+          const deleteButton = document.createElement('button');
+          deleteButton.className = 'delete-button';
+          deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+          deleteButton.title = 'Delete Depot';
+          deleteButton.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering the parent click event
+            openConfirmModal(depot.id);
+          });
+
+          // Add buttons to actions div
+          actionsDiv.appendChild(editButton);
+          actionsDiv.appendChild(deleteButton);
+
+          // Add content and actions to list item
+          listItem.appendChild(contentDiv);
+          listItem.appendChild(actionsDiv);
+
+          // Add list item to depot list
+          depotList.appendChild(listItem);
+        });
+      });
+    }
+
+    // Set up map controls (minimize/maximize)
+    function setupMapControls() {
+      const mapContainer = document.getElementById('map-container');
+      const minimizeBtn = document.getElementById('minimize-btn');
+      const maximizeBtn = document.getElementById('maximize-btn');
+
+      // Minimize button
+      minimizeBtn.addEventListener('click', function() {
+        if (mapContainer.classList.contains('minimized')) {
+          // If already minimized, restore
+          mapContainer.classList.remove('minimized');
+          minimizeBtn.innerHTML = '<i class="fas fa-minus"></i>';
+          minimizeBtn.title = 'Minimize';
+        } else {
+          // Minimize the map
+          mapContainer.classList.remove('maximized');
+          mapContainer.classList.add('minimized');
+          minimizeBtn.innerHTML = '<i class="fas fa-plus"></i>';
+          minimizeBtn.title = 'Restore';
+          maximizeBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          maximizeBtn.title = 'Maximize';
+        }
+      });
+
+      // Maximize button
+      maximizeBtn.addEventListener('click', function() {
+        if (mapContainer.classList.contains('maximized')) {
+          // If already maximized, restore
+          mapContainer.classList.remove('maximized');
+          maximizeBtn.innerHTML = '<i class="fas fa-expand"></i>';
+          maximizeBtn.title = 'Maximize';
+        } else {
+          // Maximize the map
+          mapContainer.classList.remove('minimized');
+          mapContainer.classList.add('maximized');
+          maximizeBtn.innerHTML = '<i class="fas fa-compress"></i>';
+          maximizeBtn.title = 'Restore';
+          minimizeBtn.innerHTML = '<i class="fas fa-minus"></i>';
+          minimizeBtn.title = 'Minimize';
+        }
+
+        // Trigger resize event to fix map display
+        if (map) {
+          map.invalidateSize();
+        }
+      });
+    }
+
+
+
+    // Get human-readable status label
+    function getStatusLabel(status) {
+      switch(status) {
+        case 'approved':
+          return 'Approved';
+        case 'in-progress':
+          return 'In Progress';
+        case 'not-approved':
+          return 'Not Approved';
+        default:
+          return 'Unknown';
+      }
+    }
+
+    // Google Maps variables
+    let map;
+    let markers = [];
+
+    // Initialize the map
+    function initMap() {
+      // Initialize the map
+      map = L.map('map').setView([20, 0], 2);
+
+      // Add a more readable tile layer with better contrast
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Add markers for all depots
+      depots.forEach(depot => {
+        addMarker(depot);
+      });
+
+      // Initialize autocomplete for the address input
+      initAutocomplete();
+
+      // Fix map display when maximizing/minimizing
+      map.invalidateSize();
+    }
+
+    // Add a marker to the map
+    function addMarker(depot) {
+      // Get marker icon based on status
+      const icon = getMarkerIcon(depot.status);
+
+      // Create marker
+      const marker = L.marker([depot.lat, depot.lng], {
+        title: depot.name,
+        icon: icon
+      }).addTo(map);
+
+      // Create popup content
+      const popupContent = `
+        <div class="info-window">
+          <h3>${depot.name}</h3>
+          <p><strong>Address:</strong> ${depot.address}</p>
+          <p><strong>Status:</strong> <span class="status-${depot.status}">${getStatusLabel(depot.status)}</span></p>
+          ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+        </div>
+      `;
+
+      // Bind popup to marker
+      marker.bindPopup(popupContent);
+
+      // Store depot reference with marker
+      marker.depot = depot;
+
+      // Store marker
+      markers.push(marker);
+
+      return marker;
+    }
+
+    // Get marker icon based on status
+    function getMarkerIcon(status) {
+      let iconUrl;
+
+      switch(status) {
+        case 'approved':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png';
+          break;
+        case 'in-progress':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png';
+          break;
+        case 'not-approved':
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png';
+          break;
+        default:
+          iconUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png';
+      }
+
+      return L.icon({
+        iconUrl: iconUrl,
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+    }
+
+    // Center the map on a specific depot
+    function centerMapOnDepot(depot) {
+      if (map) {
+        map.setView([depot.lat, depot.lng], 10);
+
+        // Find and open the popup for this depot
+        const marker = markers.find(m => m.depot.id === depot.id);
+
+        if (marker) {
+          // Open this marker's popup
+          marker.openPopup();
+        }
+      }
+    }
+
+    // Search for an address and get coordinates
+    // This is now a backup method if autocomplete doesn't work
+    async function searchAddress() {
+      const addressInput = document.getElementById('depot-address');
+      const address = addressInput.value.trim();
+      const searchButton = document.getElementById('search-address-button');
+
+      if (!address) {
+        alert('Please enter an address to search');
+        return;
+      }
+
+      // Show loading state
+      searchButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      searchButton.disabled = true;
+
+      try {
+        // Check if the address is in an embargoed country
+        const embargoResult = await checkEmbargoedCountry(address);
+        if (embargoResult.isEmbargoed) {
+          // Reset button state
+          searchButton.innerHTML = '<i class="fas fa-search"></i>';
+          searchButton.disabled = false;
+
+          alert(`We cannot add a depot in ${embargoResult.country} due to trade restrictions.`);
+          addressInput.value = ''; // Clear the address field
+          return;
+        }
+
+        // Use Nominatim for geocoding
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        const data = await response.json();
+
+        // Reset button state
+        searchButton.innerHTML = '<i class="fas fa-search"></i>';
+        searchButton.disabled = false;
+
+        if (data && data.length > 0) {
+          const result = data[0];
+          const lat = parseFloat(result.lat);
+          const lon = parseFloat(result.lon);
+
+          // Set the latitude and longitude fields
+          document.getElementById('depot-lat').value = lat;
+          document.getElementById('depot-lng').value = lon;
+
+          // Update the address field with the formatted address
+          document.getElementById('depot-address').value = result.display_name;
+
+          // Show a success message in a more subtle way
+          addressInput.style.borderColor = '#2ecc71';
+
+          // Reset border color after 2 seconds
+          setTimeout(() => {
+            addressInput.style.borderColor = 'rgba(100, 150, 255, 0.3)';
+          }, 2000);
+        } else {
+          alert("Couldn't find coordinates for this address. Please try a different address.");
+        }
+      } catch (error) {
+        // Reset button state
+        searchButton.innerHTML = '<i class="fas fa-search"></i>';
+        searchButton.disabled = false;
+        console.error('Error in searchAddress:', error);
+        alert("An error occurred while searching for this address. Please try again.");
+      }
+    }
+
+    // Send email notification when notes are added or changed
+    function sendEmailNotification(depotName, notes, action) {
+      // Create a hidden form that will submit to a mailto: link
+      const form = document.createElement('form');
+      form.style.display = 'none';
+      form.method = 'post';
+
+      // Format the email content
+      const subject = `Depot Note ${action === 'added' ? 'Added' : 'Updated'}: ${depotName}`;
+      const body = `A note has been ${action} for depot: ${depotName}\n\nNote: ${notes}\n\nTime: ${new Date().toLocaleString()}`;
+
+      // Set the mailto link as the form's action
+      form.action = `mailto:jswtsao@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+      // Add the form to the document, submit it, and remove it
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+
+      // Show a notification that an email was sent
+      const emailNotification = document.createElement('div');
+      emailNotification.className = 'success-message';
+      emailNotification.style.backgroundColor = 'rgba(52, 152, 219, 0.9)';
+      emailNotification.innerHTML = `
+        <i class="fas fa-envelope"></i>
+        Email notification sent for depot note
+      `;
+      document.body.appendChild(emailNotification);
+
+      // Remove the notification after 3 seconds
+      setTimeout(() => {
+        emailNotification.classList.add('fade-out');
+        setTimeout(() => {
+          document.body.removeChild(emailNotification);
+        }, 500);
+      }, 2500);
+    }
+
+    // Check if an address is in an embargoed country
+    async function checkEmbargoedCountry(address) {
+      // Extract country from address
+      const addressParts = address.split(',');
+      const countryPart = addressParts[addressParts.length - 1].trim();
+
+      // Check if the country is in the embargoed list
+      const isEmbargoed = embargoedCountries.some(country => {
+        return countryPart.toLowerCase().includes(country.toLowerCase());
+      });
+
+      // If we couldn't determine from the address, try using Nominatim
+      if (!isEmbargoed && addressParts.length < 2) {
+        try {
+          // Use Nominatim to get country information
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+          const data = await response.json();
+
+          if (data && data.length > 0) {
+            // Check if there's country information
+            const result = data[0];
+            if (result.address && result.address.country) {
+              const country = result.address.country;
+              const isCountryEmbargoed = embargoedCountries.some(embargoedCountry => {
+                return country.toLowerCase().includes(embargoedCountry.toLowerCase());
+              });
+
+              return { isEmbargoed: isCountryEmbargoed, country };
+            }
+          }
+        } catch (error) {
+          console.error('Error in geocoding:', error);
+        }
+      }
+
+      return { isEmbargoed, country: countryPart };
+    }
+
+    // Get marker color based on status
+    function getMarkerColor(status) {
+      switch(status) {
+        case 'approved':
+          return '#3498db'; // Blue
+        case 'in-progress':
+          return '#f39c12'; // Orange
+        case 'not-approved':
+          return '#e74c3c'; // Red
+        default:
+          return '#7f8c8d'; // Gray
+      }
+    }
+  </script>
+  <!-- Add/Edit Depot Modal -->
+  <div id="depot-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-stars"></div>
+      <span class="close-button" id="close-modal">&times;</span>
+      <h2 id="modal-title">Add New Depot</h2>
+      <form id="depot-form">
+        <input type="hidden" id="depot-id">
+        <div class="form-group">
+          <label for="depot-name">Depot Name:</label>
+          <input type="text" id="depot-name" required>
+        </div>
+        <div class="form-group">
+          <label for="depot-address">Address:</label>
+          <div class="address-search-container">
+            <input type="text" id="depot-address" placeholder="Enter an address..." required>
+            <button type="button" id="search-address-button" class="search-button"><i class="fas fa-search"></i></button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="depot-status">Status:</label>
+          <select id="depot-status" required>
+            <option value="approved">Approved</option>
+            <option value="in-progress">In Progress</option>
+            <option value="not-approved">Not Approved</option>
+          </select>
+        </div>
+        <input type="hidden" id="depot-lat">
+        <input type="hidden" id="depot-lng">
+        <div class="form-group">
+          <label for="depot-notes">Notes:</label>
+          <textarea id="depot-notes" rows="3"></textarea>
+        </div>
+        <div class="form-actions">
+          <div class="left-actions">
+            <button type="button" id="delete-button" class="form-delete-button"><i class="fas fa-trash-alt"></i> Delete</button>
+          </div>
+          <div class="right-actions">
+            <button type="button" id="cancel-button" class="cancel-button">Cancel</button>
+            <button type="submit" class="save-button"><i class="fas fa-save"></i> Save Depot</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div id="confirm-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-stars"></div>
+      <span class="close-button" id="close-confirm-modal">&times;</span>
+      <h2>Confirm Deletion</h2>
+      <p>Are you sure you want to delete this depot?</p>
+      <div class="form-actions">
+        <div class="left-actions"></div>
+        <div class="right-actions">
+          <button id="cancel-delete" class="cancel-button">Cancel</button>
+          <button id="confirm-delete" class="form-delete-button"><i class="fas fa-trash-alt"></i> Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // Create stars for modal backgrounds
+    function createModalStars() {
+      const modalStarsContainers = document.querySelectorAll('.modal-stars');
+      const starCount = 20;
+
+      modalStarsContainers.forEach(container => {
+        for (let i = 0; i < starCount; i++) {
+          const star = document.createElement('div');
+          star.className = 'star';
+
+          // Random position
+          const x = Math.random() * 100;
+          const y = Math.random() * 100;
+
+          // Random size
+          const size = Math.random() * 2;
+
+          // Random animation delay
+          const delay = Math.random() * 5;
+
+          star.style.left = `${x}%`;
+          star.style.top = `${y}%`;
+          star.style.width = `${size}px`;
+          star.style.height = `${size}px`;
+          star.style.animationDelay = `${delay}s`;
+
+          container.appendChild(star);
+        }
+      });
+    }
+
+    // Call createModalStars and initialize map when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      createModalStars();
+      initMap();
+    });
+
+    // Initialize autocomplete with Nominatim
+    function initAutocomplete() {
+      const addressInput = document.getElementById('depot-address');
+
+      // Create a container for search results
+      const searchResultsContainer = document.createElement('div');
+      searchResultsContainer.className = 'search-results';
+      searchResultsContainer.style.display = 'none';
+
+      // Add the container after the search input
+      const addressSearchContainer = document.querySelector('.address-search-container');
+      addressSearchContainer.style.position = 'relative';
+      addressSearchContainer.appendChild(searchResultsContainer);
+
+      // Input change for autocomplete
+      addressInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        if (query.length > 2) {
+          // Fetch suggestions from Nominatim
+          fetchAddressSuggestions(query);
+        } else {
+          searchResultsContainer.style.display = 'none';
+        }
+      });
+
+      // Fetch address suggestions from Nominatim
+      function fetchAddressSuggestions(query) {
+        // Clear previous results
+        searchResultsContainer.innerHTML = '';
+
+        // Fetch from Nominatim
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              // Show results container
+              searchResultsContainer.style.display = 'block';
+
+              // Add each result
+              data.forEach(result => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'search-result-item';
+                resultItem.textContent = result.display_name;
+
+                // Add click handler
+                resultItem.addEventListener('click', async function() {
+                  // Set input value
+                  addressInput.value = result.display_name;
+
+                  // Hide results
+                  searchResultsContainer.style.display = 'none';
+
+                  // Check if the address is in an embargoed country
+                  const embargoResult = await checkEmbargoedCountry(result.display_name);
+                  if (embargoResult.isEmbargoed) {
+                    alert(`We cannot add a depot in ${embargoResult.country} due to trade restrictions.`);
+                    addressInput.value = ''; // Clear the address field
+                    return;
+                  }
+
+                  // Set the latitude and longitude fields
+                  document.getElementById('depot-lat').value = parseFloat(result.lat);
+                  document.getElementById('depot-lng').value = parseFloat(result.lon);
+
+                  // Show a success message in a subtle way
+                  addressInput.style.borderColor = '#2ecc71';
+
+                  // Reset border color after 2 seconds
+                  setTimeout(() => {
+                    addressInput.style.borderColor = 'rgba(100, 150, 255, 0.3)';
+                  }, 2000);
+                });
+
+                searchResultsContainer.appendChild(resultItem);
+              });
+            } else {
+              searchResultsContainer.style.display = 'none';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching address suggestions:', error);
+            searchResultsContainer.style.display = 'none';
+          });
+      }
+    }
+
+    // Autocomplete is now initialized in the initMap function
+  </script>
+</body>
+</html>
