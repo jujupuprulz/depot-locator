@@ -994,7 +994,6 @@
           <button id="add-depot-button" class="action-button">
             <i class="fas fa-plus"></i> Add Depot
           </button>
-
         </div>
       </div>
       <ul class="depot-list" id="depot-list">
@@ -1021,7 +1020,7 @@
 
   <script>
     // Sample depot data
-    let depots = [
+    let defaultDepots = [
       // North America
       {
         id: 1,
@@ -1208,6 +1207,9 @@
       }
     ];
 
+    // Load depots from localStorage or use default data
+    let depots = JSON.parse(localStorage.getItem('depots')) || defaultDepots;
+
     // List of embargoed countries
     const embargoedCountries = [
       'Cuba',
@@ -1224,10 +1226,49 @@
     // Current depot being edited
     let currentDepotId = null;
 
+    // Function to reset depots to default values
+    function resetDepotsToDefault() {
+      depots = [...defaultDepots];
+      localStorage.setItem('depots', JSON.stringify(depots));
+
+      // Update the map and list
+      if (map) {
+        clearMapOverlays();
+        depots.forEach(depot => {
+          addMarker(depot);
+        });
+      }
+      renderDepotList();
+
+      // Show a success message
+      const successMessage = document.createElement('div');
+      successMessage.className = 'success-message';
+      successMessage.innerHTML = `
+        <i class="fas fa-sync-alt"></i>
+        Depot list has been restored to default!
+      `;
+      document.body.appendChild(successMessage);
+
+      // Remove the message after 3 seconds
+      setTimeout(() => {
+        successMessage.classList.add('fade-out');
+        setTimeout(() => {
+          document.body.removeChild(successMessage);
+        }, 500);
+      }, 2500);
+    }
+
     // Initialize when the page loads
     document.addEventListener('DOMContentLoaded', function() {
       createStars();
-      renderDepotList();
+
+      // Check if depots list is empty and reset if needed
+      if (!depots || depots.length === 0) {
+        resetDepotsToDefault();
+      } else {
+        renderDepotList();
+      }
+
       setupMapControls();
       setupEventListeners();
     });
@@ -1356,6 +1397,10 @@
       const status = document.getElementById('depot-status').value;
       const notes = document.getElementById('depot-notes').value;
 
+      // Get lat/lng from form
+      const latInput = document.getElementById('depot-lat').value;
+      const lngInput = document.getElementById('depot-lng').value;
+
       // Check if the address is in an embargoed country
       const embargoResult = await checkEmbargoedCountry(address);
       if (embargoResult.isEmbargoed) {
@@ -1387,9 +1432,9 @@
         // Update existing depot
         const index = depots.findIndex(d => d.id == id);
         if (index !== -1) {
-          // Keep the existing lat/lng
-          const lat = depots[index].lat;
-          const lng = depots[index].lng;
+          // Use the form lat/lng if provided, otherwise keep existing
+          const lat = latInput ? parseFloat(latInput) : depots[index].lat;
+          const lng = lngInput ? parseFloat(lngInput) : depots[index].lng;
 
           depots[index] = {
             ...depots[index],
@@ -1402,12 +1447,20 @@
           };
         }
       } else {
-        // Add new depot - use a default location if adding new
+        // Add new depot
         const newId = depots.length > 0 ? Math.max(...depots.map(d => d.id)) + 1 : 1;
 
-        // Generate a random location near the center of the map if no coordinates provided
-        const lat = 20 + (Math.random() * 20 - 10);
-        const lng = (Math.random() * 40 - 20);
+        // Use coordinates from form if provided
+        let lat, lng;
+
+        if (latInput && lngInput) {
+          lat = parseFloat(latInput);
+          lng = parseFloat(lngInput);
+        } else {
+          // Generate a random location near the center of the map if no coordinates provided
+          lat = 20 + (Math.random() * 20 - 10);
+          lng = (Math.random() * 40 - 20);
+        }
 
         depots.push({
           id: newId,
@@ -1449,6 +1502,9 @@
         sendEmailNotification(name, notes, id ? 'updated' : 'added');
       }
 
+      // Save to localStorage
+      localStorage.setItem('depots', JSON.stringify(depots));
+
       // Close the modal
       closeDepotModal();
     }
@@ -1484,6 +1540,9 @@
           document.body.removeChild(successMessage);
         }, 500);
       }, 2500);
+
+      // Save to localStorage
+      localStorage.setItem('depots', JSON.stringify(depots));
     }
 
     // Clear all markers from the map
@@ -1737,35 +1796,99 @@
 
     // Add a marker to the map
     function addMarker(depot) {
-      // Get marker icon based on status
-      const icon = getMarkerIcon(depot.status);
+      // Check for valid coordinates
+      if (!depot.lat || !depot.lng || isNaN(depot.lat) || isNaN(depot.lng)) {
+        console.error(`Invalid coordinates for depot ${depot.name}:`, depot);
 
-      // Create marker
-      const marker = L.marker([depot.lat, depot.lng], {
-        title: depot.name,
-        icon: icon
-      }).addTo(map);
+        // Try to geocode the address to get coordinates
+        geocodeDepotAddress(depot);
+        return null;
+      }
 
-      // Create popup content
-      const popupContent = `
-        <div class="info-window">
-          <h3>${depot.name}</h3>
-          <p><strong>Address:</strong> ${depot.address}</p>
-          <p><strong>Status:</strong> <span class="status-${depot.status}">${getStatusLabel(depot.status)}</span></p>
-          ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
-        </div>
-      `;
+      // Log the depot being added
+      console.log(`Adding marker for depot: ${depot.name}, Coordinates: ${depot.lat}, ${depot.lng}`);
 
-      // Bind popup to marker
-      marker.bindPopup(popupContent);
+      try {
+        // Get marker icon based on status
+        const icon = getMarkerIcon(depot.status);
 
-      // Store depot reference with marker
-      marker.depot = depot;
+        // Create marker
+        const marker = L.marker([depot.lat, depot.lng], {
+          title: depot.name,
+          icon: icon
+        }).addTo(map);
 
-      // Store marker
-      markers.push(marker);
+        // Create popup content
+        const popupContent = `
+          <div class="info-window">
+            <h3>${depot.name}</h3>
+            <p><strong>Address:</strong> ${depot.address}</p>
+            <p><strong>Status:</strong> <span class="status-${depot.status}">${getStatusLabel(depot.status)}</span></p>
+            <p><strong>Coordinates:</strong> ${depot.lat.toFixed(6)}, ${depot.lng.toFixed(6)}</p>
+            ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+          </div>
+        `;
 
-      return marker;
+        // Bind popup to marker
+        marker.bindPopup(popupContent);
+
+        // Store depot reference with marker
+        marker.depot = depot;
+
+        // Store marker
+        markers.push(marker);
+
+        return marker;
+      } catch (error) {
+        console.error(`Error adding marker for depot ${depot.name}:`, error);
+        return null;
+      }
+    }
+
+    // Geocode a depot address to get coordinates
+    async function geocodeDepotAddress(depot) {
+      if (!depot.address) return;
+
+      try {
+        console.log(`Geocoding address for depot: ${depot.name}`);
+
+        // Use Nominatim for geocoding
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(depot.address)}&limit=1&addressdetails=1`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          const result = data[0];
+          depot.lat = parseFloat(result.lat);
+          depot.lng = parseFloat(result.lon);
+
+          console.log(`Updated coordinates for ${depot.name}: ${depot.lat}, ${depot.lng}`);
+
+          // Save the updated depot to localStorage
+          localStorage.setItem('depots', JSON.stringify(depots));
+
+          // Add the marker now that we have coordinates
+          const marker = addMarker(depot);
+
+          // Show a notification
+          const notification = document.createElement('div');
+          notification.className = 'success-message';
+          notification.innerHTML = `
+            <i class="fas fa-map-marker-alt"></i>
+            Updated coordinates for ${depot.name}
+          `;
+          document.body.appendChild(notification);
+
+          // Remove the notification after 3 seconds
+          setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+              document.body.removeChild(notification);
+            }, 500);
+          }, 2500);
+        }
+      } catch (error) {
+        console.error(`Error geocoding address for depot ${depot.name}:`, error);
+      }
     }
 
     // Get marker icon based on status
@@ -1840,8 +1963,18 @@
           return;
         }
 
-        // Use Nominatim for geocoding
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        // Special handling for Taiwan addresses
+        const isTaiwanAddress = address.toLowerCase().includes('taiwan') ||
+                               address.toLowerCase().includes('taipei') ||
+                               address.toLowerCase().includes('kaohsiung') ||
+                               address.toLowerCase().includes('taichung');
+
+        if (isTaiwanAddress) {
+          console.log("Taiwan address detected, using special handling");
+        }
+
+        // Use Nominatim for geocoding with more parameters for better results
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1&extratags=1`);
         const data = await response.json();
 
         // Reset button state
@@ -1850,8 +1983,26 @@
 
         if (data && data.length > 0) {
           const result = data[0];
-          const lat = parseFloat(result.lat);
-          const lon = parseFloat(result.lon);
+          let lat = parseFloat(result.lat);
+          let lon = parseFloat(result.lon);
+
+          // Special handling for Taiwan coordinates
+          if (isTaiwanAddress) {
+            // If the geocoding didn't return Taiwan coordinates but we know it's Taiwan
+            if (!(lat > 20 && lat < 30 && lon > 115 && lon < 125)) {
+              console.log("Geocoding returned incorrect coordinates for Taiwan, using default Taiwan coordinates");
+              // Use default coordinates for Taipei
+              if (address.toLowerCase().includes('taipei')) {
+                lat = 25.0330;
+                lon = 121.5654;
+              } else {
+                // General Taiwan coordinates
+                lat = 23.6978;
+                lon = 120.9605;
+              }
+            }
+            console.log(`Using Taiwan coordinates: ${lat}, ${lon}`);
+          }
 
           // Set the latitude and longitude fields
           document.getElementById('depot-lat').value = lat;
@@ -1859,6 +2010,37 @@
 
           // Update the address field with the formatted address
           document.getElementById('depot-address').value = result.display_name;
+
+          // Center the map on this location
+          if (map) {
+            map.setView([lat, lon], 10);
+
+            // Add a temporary marker to show the location
+            const tempMarker = L.marker([lat, lon], {
+              icon: L.icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+              })
+            }).addTo(map);
+
+            // Show coordinates in a popup
+            tempMarker.bindPopup(`
+              <div class="info-window">
+                <h3>Selected Location</h3>
+                <p><strong>Address:</strong> ${result.display_name}</p>
+                <p><strong>Coordinates:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}</p>
+              </div>
+            `).openPopup();
+
+            // Remove the marker after 5 seconds
+            setTimeout(() => {
+              map.removeLayer(tempMarker);
+            }, 5000);
+          }
 
           // Show a success message in a more subtle way
           addressInput.style.borderColor = '#2ecc71';
@@ -1868,7 +2050,64 @@
             addressInput.style.borderColor = 'rgba(100, 150, 255, 0.3)';
           }, 2000);
         } else {
-          alert("Couldn't find coordinates for this address. Please try a different address.");
+          // If no results found but it's a Taiwan address, use default Taiwan coordinates
+          if (isTaiwanAddress) {
+            console.log("No geocoding results for Taiwan address, using default Taiwan coordinates");
+            let lat, lon;
+
+            if (address.toLowerCase().includes('taipei')) {
+              lat = 25.0330;
+              lon = 121.5654;
+            } else {
+              // General Taiwan coordinates
+              lat = 23.6978;
+              lon = 120.9605;
+            }
+
+            // Set the latitude and longitude fields
+            document.getElementById('depot-lat').value = lat;
+            document.getElementById('depot-lng').value = lon;
+
+            // Center the map on this location
+            if (map) {
+              map.setView([lat, lon], 10);
+
+              // Add a temporary marker
+              const tempMarker = L.marker([lat, lon], {
+                icon: L.icon({
+                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                })
+              }).addTo(map);
+
+              // Show coordinates in a popup
+              tempMarker.bindPopup(`
+                <div class="info-window">
+                  <h3>Taiwan Location</h3>
+                  <p><strong>Address:</strong> ${address}</p>
+                  <p><strong>Coordinates:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}</p>
+                  <p><em>Using default Taiwan coordinates</em></p>
+                </div>
+              `).openPopup();
+
+              // Remove the marker after 5 seconds
+              setTimeout(() => {
+                map.removeLayer(tempMarker);
+              }, 5000);
+            }
+
+            // Show a success message
+            addressInput.style.borderColor = '#2ecc71';
+            setTimeout(() => {
+              addressInput.style.borderColor = 'rgba(100, 150, 255, 0.3)';
+            }, 2000);
+          } else {
+            alert("Couldn't find coordinates for this address. Please try a different address.");
+          }
         }
       } catch (error) {
         // Reset button state
@@ -2101,8 +2340,8 @@
         // Clear previous results
         searchResultsContainer.innerHTML = '';
 
-        // Fetch from Nominatim
-        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`)
+        // Fetch from Nominatim with improved parameters
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&extratags=1`)
           .then(response => response.json())
           .then(data => {
             if (data && data.length > 0) {
@@ -2113,7 +2352,19 @@
               data.forEach(result => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'search-result-item';
-                resultItem.textContent = result.display_name;
+
+                // Format the display name to be more readable
+                let displayName = result.display_name;
+                // If it's too long, try to shorten it
+                if (displayName.length > 70) {
+                  const parts = displayName.split(',');
+                  if (parts.length > 3) {
+                    // Keep first part, then add country
+                    displayName = parts[0] + ', ' + parts[parts.length-2] + ', ' + parts[parts.length-1];
+                  }
+                }
+
+                resultItem.textContent = displayName;
 
                 // Add click handler
                 resultItem.addEventListener('click', async function() {
@@ -2131,9 +2382,69 @@
                     return;
                   }
 
+                  // Get coordinates from the result
+                  let lat = parseFloat(result.lat);
+                  let lon = parseFloat(result.lon);
+
+                  // Special handling for Taiwan addresses
+                  const isTaiwanAddress = result.display_name.toLowerCase().includes('taiwan') ||
+                                        (result.address && result.address.country &&
+                                         result.address.country.toLowerCase().includes('taiwan'));
+
+                  if (isTaiwanAddress) {
+                    console.log("Taiwan address detected in autocomplete, using special handling");
+
+                    // If the geocoding didn't return Taiwan coordinates but we know it's Taiwan
+                    if (!(lat > 20 && lat < 30 && lon > 115 && lon < 125)) {
+                      console.log("Geocoding returned incorrect coordinates for Taiwan, using default Taiwan coordinates");
+                      // Use default coordinates for Taipei
+                      if (result.display_name.toLowerCase().includes('taipei')) {
+                        lat = 25.0330;
+                        lon = 121.5654;
+                      } else {
+                        // General Taiwan coordinates
+                        lat = 23.6978;
+                        lon = 120.9605;
+                      }
+                    }
+                    console.log(`Using Taiwan coordinates: ${lat}, ${lon}`);
+                  }
+
                   // Set the latitude and longitude fields
-                  document.getElementById('depot-lat').value = parseFloat(result.lat);
-                  document.getElementById('depot-lng').value = parseFloat(result.lon);
+                  document.getElementById('depot-lat').value = lat;
+                  document.getElementById('depot-lng').value = lon;
+
+                  // Center the map on this location
+                  if (map) {
+                    map.setView([lat, lon], 10);
+
+                    // Add a temporary marker to show the location
+                    const tempMarker = L.marker([lat, lon], {
+                      icon: L.icon({
+                        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+                        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                        popupAnchor: [1, -34],
+                        shadowSize: [41, 41]
+                      })
+                    }).addTo(map);
+
+                    // Show coordinates in a popup
+                    tempMarker.bindPopup(`
+                      <div class="info-window">
+                        <h3>Selected Location</h3>
+                        <p><strong>Address:</strong> ${result.display_name}</p>
+                        <p><strong>Coordinates:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}</p>
+                        ${isTaiwanAddress ? '<p><em>Taiwan location detected</em></p>' : ''}
+                      </div>
+                    `).openPopup();
+
+                    // Remove the marker after 5 seconds
+                    setTimeout(() => {
+                      map.removeLayer(tempMarker);
+                    }, 5000);
+                  }
 
                   // Show a success message in a subtle way
                   addressInput.style.borderColor = '#2ecc71';
