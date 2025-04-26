@@ -646,10 +646,13 @@
       // Input change for autocomplete
       searchInput.addEventListener('input', function() {
         const query = this.value.trim();
+        console.log("Input changed, query:", query);
         if (query.length > 2) {
           // Fetch suggestions from Nominatim
+          console.log("Query length > 2, fetching suggestions");
           fetchAddressSuggestions(query);
         } else {
+          console.log("Query too short, hiding suggestions");
           searchResultsContainer.style.display = 'none';
         }
       });
@@ -657,34 +660,47 @@
 
     // Fetch address suggestions from Nominatim
     function fetchAddressSuggestions(query) {
+      console.log("fetchAddressSuggestions called with query:", query);
+
       const searchResultsContainer = document.querySelector('.search-results');
+      console.log("Search results container:", searchResultsContainer);
 
       // Clear previous results
       searchResultsContainer.innerHTML = '';
 
       // Don't make API calls for very short queries
       if (query.length < 3) {
+        console.log("Query too short, not fetching suggestions");
         searchResultsContainer.style.display = 'none';
         return;
       }
 
       // Show loading indicator in the search results container
+      console.log("Showing loading indicator");
       searchResultsContainer.style.display = 'block';
       searchResultsContainer.innerHTML = '<div class="search-result-item" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
 
       // Fetch from Nominatim with improved parameters
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&extratags=1`)
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&extratags=1&accept-language=en`, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'DepotLocatorApp/1.0'
+        }
+      })
         .then(response => {
+          console.log("Nominatim API response:", response);
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
           }
           return response.json();
         })
         .then(data => {
+          console.log("Nominatim API data:", data);
           // Clear the loading indicator
           searchResultsContainer.innerHTML = '';
 
           if (data && data.length > 0) {
+            console.log(`Found ${data.length} suggestions`);
             // Show results container
             searchResultsContainer.style.display = 'block';
 
@@ -780,7 +796,17 @@
         })
         .catch(error => {
           console.error('Error fetching address suggestions:', error);
+          console.error('Error details:', error.message, error.stack);
           searchResultsContainer.style.display = 'none';
+
+          // Show error message in the search results container
+          searchResultsContainer.style.display = 'block';
+          searchResultsContainer.innerHTML = '<div class="search-result-item" style="text-align: center; color: #e53e3e;"><i class="fas fa-exclamation-circle"></i> Error loading suggestions</div>';
+
+          // Hide after 3 seconds
+          setTimeout(() => {
+            searchResultsContainer.style.display = 'none';
+          }, 3000);
         });
     }
 
@@ -796,7 +822,12 @@
       document.getElementById('search-button').innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
       // Use Nominatim for geocoding with improved parameters
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&addressdetails=1&accept-language=en`)
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input)}&limit=1&addressdetails=1&extratags=1&accept-language=en`, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'DepotLocatorApp/1.0'
+        }
+      })
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -1084,7 +1115,12 @@
         // If we couldn't determine from the address string, try using Nominatim with addressdetails
         try {
           // Use Nominatim to get detailed country information
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1`);
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&addressdetails=1&extratags=1&accept-language=en`, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'DepotLocatorApp/1.0'
+            }
+          });
 
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
