@@ -1953,27 +1953,37 @@
 
         // Add click event to toggle status section
         statusHeader.addEventListener('click', function() {
-          const regionSections = document.querySelectorAll(`.region-header[data-status="${section.status}"]`);
           const isMinimized = toggleStatusButton.title === 'Expand';
 
-          regionSections.forEach(regionSection => {
-            regionSection.style.display = isMinimized ? 'flex' : 'none';
-          });
+          // Toggle all region headers for this status
+          const regionSections = document.querySelectorAll(`.region-header[data-status="${section.status}"]`);
 
           // Also toggle all depot items for this status
           const depotItems = document.querySelectorAll(`.depot-item[data-status="${section.status}"]`);
-          depotItems.forEach(item => {
-            if (isMinimized) {
-              // When expanding, we need to check if the parent region is expanded
-              const regionHeader = document.querySelector(`.region-header[data-status="${section.status}"][data-region="${item.getAttribute('data-region')}"]`);
-              const regionToggle = regionHeader.querySelector('.region-toggle');
-              if (regionToggle.title === 'Minimize') {
-                item.style.display = 'flex';
-              }
-            } else {
+
+          if (isMinimized) {
+            // When expanding status, show region headers but keep them collapsed
+            regionSections.forEach(regionSection => {
+              regionSection.style.display = 'flex';
+              const regionToggle = regionSection.querySelector('.region-toggle');
+              regionToggle.innerHTML = '<i class="fas fa-chevron-right"></i>';
+              regionToggle.title = 'Expand';
+            });
+
+            // Keep all depot items hidden
+            depotItems.forEach(item => {
               item.style.display = 'none';
-            }
-          });
+            });
+          } else {
+            // When collapsing status, hide all region headers and depot items
+            regionSections.forEach(regionSection => {
+              regionSection.style.display = 'none';
+            });
+
+            depotItems.forEach(item => {
+              item.style.display = 'none';
+            });
+          }
 
           toggleStatusButton.innerHTML = isMinimized ?
             '<i class="fas fa-chevron-down"></i>' :
@@ -1992,11 +2002,12 @@
 
           if (regionDepots.length === 0) return; // Skip empty regions
 
-          // Create region header
+          // Create region header - hidden by default
           const regionHeader = document.createElement('div');
           regionHeader.className = 'region-header';
           regionHeader.setAttribute('data-status', section.status);
           regionHeader.setAttribute('data-region', region);
+          regionHeader.style.display = 'none'; // Hide by default
 
           // Create region title with icon
           const regionTitle = document.createElement('div');
