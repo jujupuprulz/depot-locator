@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Depot Backup Manager</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: #0f172a;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stars-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      background-color: #fff;
+      border-radius: 50%;
+      width: 2px;
+      height: 2px;
+      opacity: 0.7;
+      animation: twinkle 5s infinite;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.2; }
+      50% { opacity: 0.8; }
+      100% { opacity: 0.2; }
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    button.danger {
+      background-color: #ef4444;
+    }
+
+    button.danger:hover {
+      background-color: #dc2626;
+    }
+
+    button.success {
+      background-color: #10b981;
+    }
+
+    button.success:hover {
+      background-color: #059669;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    th {
+      background-color: #f9fafb;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background-color: #f9fafb;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-approved {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .status-in-progress {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-not-approved {
+      background-color: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 200px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid #3b82f6;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px 20px;
+      border-radius: 4px;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+
+    .notification.success {
+      background-color: #10b981;
+    }
+
+    .notification.error {
+      background-color: #ef4444;
+    }
+
+    .notification.show {
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 0;
+      color: #6b7280;
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 20px;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div id="stars-bg" class="stars-bg"></div>
+    <div class="container">
+      <h1>Depot Backup Manager</h1>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <div class="actions">
+        <button id="refresh-btn">
+          <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+        <button id="backup-btn" class="success">
+          <i class="fas fa-cloud-upload-alt"></i> Backup Current Data
+        </button>
+        <button id="restore-btn">
+          <i class="fas fa-cloud-download-alt"></i> Restore to Local
+        </button>
+        <button id="export-btn">
+          <i class="fas fa-file-export"></i> Export as JSON
+        </button>
+      </div>
+
+      <div id="depots-table-container">
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="notification" class="notification"></div>
+
+  <script>
+    // Initialize Supabase client
+    const SUPABASE_URL = 'https://guqubcdsalglyqoqutee.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1cXViY2RzYWxnbHlxb3F1dGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0MTI2ODMsImV4cCI6MjAyODk4ODY4M30.Nh83ebqzv3RKwlmsCNvgb_r1TiRJOsIqBRXfnDP7xDI';
+    const supabase = supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // DOM elements
+    const refreshBtn = document.getElementById('refresh-btn');
+    const backupBtn = document.getElementById('backup-btn');
+    const restoreBtn = document.getElementById('restore-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const depotsTableContainer = document.getElementById('depots-table-container');
+    const notification = document.getElementById('notification');
+
+    // Create stars for the header
+    function createStars() {
+      const starsContainer = document.getElementById('stars-bg');
+      const starCount = 50;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+
+        // Random position
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+
+        // Random size
+        const size = Math.random() * 2;
+
+        // Random animation delay
+        const delay = Math.random() * 5;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+
+        starsContainer.appendChild(star);
+      }
+    }
+
+    // Show notification
+    function showNotification(message, type = 'success') {
+      notification.textContent = message;
+      notification.className = `notification ${type} show`;
+
+      setTimeout(() => {
+        notification.className = `notification ${type}`;
+      }, 3000);
+    }
+
+    // Fetch depots from Supabase
+    async function fetchDepots() {
+      depotsTableContainer.innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      `;
+
+      try {
+        const { data, error } = await supabase
+          .from('depots')
+          .select('*')
+          .order('id');
+
+        if (error) throw error;
+
+        renderDepotsTable(data);
+      } catch (error) {
+        console.error('Error fetching depots:', error);
+        showNotification('Failed to fetch depots from Supabase', 'error');
+
+        depotsTableContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Failed to load depots. Please try again.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render depots table
+    function renderDepotsTable(depots) {
+      if (!depots || depots.length === 0) {
+        depotsTableContainer.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-database"></i>
+            <p>No depots found in the backup. Click "Backup Current Data" to create a backup.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let tableHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Address</th>
+              <th>Status</th>
+              <th>Coordinates</th>
+              <th>Notes</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      depots.forEach(depot => {
+        const statusClass = `status-${depot.status.replace(' ', '-')}`;
+        const formattedDate = new Date(depot.updated_at).toLocaleString();
+
+        tableHTML += `
+          <tr>
+            <td>${depot.id}</td>
+            <td>${depot.name}</td>
+            <td>${depot.address}</td>
+            <td><span class="status-badge ${statusClass}">${depot.status}</span></td>
+            <td>${depot.lat.toFixed(6)}, ${depot.lng.toFixed(6)}</td>
+            <td>${depot.notes || '-'}</td>
+            <td>${formattedDate}</td>
+          </tr>
+        `;
+      });
+
+      tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+      depotsTableContainer.innerHTML = tableHTML;
+    }
+
+    // Backup current data to Supabase
+    async function backupCurrentData() {
+      try {
+        // Get depots from localStorage
+        const depots = JSON.parse(localStorage.getItem('depots'));
+
+        if (!depots || depots.length === 0) {
+          showNotification('No depots found in local storage', 'error');
+          return;
+        }
+
+        // Clear existing data
+        const { error: deleteError } = await supabase
+          .from('depots')
+          .delete()
+          .neq('id', 0);
+
+        if (deleteError) throw deleteError;
+
+        // Prepare data for insertion
+        const depotsForInsert = depots.map(depot => ({
+          name: depot.name,
+          address: depot.address,
+          status: depot.status,
+          lat: depot.lat,
+          lng: depot.lng,
+          notes: depot.notes || ''
+        }));
+
+        // Insert data
+        const { data, error } = await supabase
+          .from('depots')
+          .insert(depotsForInsert)
+          .select();
+
+        if (error) throw error;
+
+        showNotification(`Successfully backed up ${data.length} depots to Supabase`);
+        fetchDepots();
+      } catch (error) {
+        console.error('Error backing up data:', error);
+        showNotification('Failed to backup data to Supabase', 'error');
+      }
+    }
+
+    // Restore data from Supabase to localStorage
+    async function restoreToLocal() {
+      try {
+        const { data, error } = await supabase
+          .from('depots')
+          .select('*')
+          .order('id');
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          showNotification('No depots found in Supabase backup', 'error');
+          return;
+        }
+
+        // Format data for localStorage
+        const depotsForLocal = data.map((depot, index) => ({
+          id: index + 1,
+          name: depot.name,
+          address: depot.address,
+          status: depot.status,
+          lat: depot.lat,
+          lng: depot.lng,
+          notes: depot.notes
+        }));
+
+        // Save to localStorage
+        localStorage.setItem('depots', JSON.stringify(depotsForLocal));
+
+        showNotification(`Successfully restored ${data.length} depots to local storage`);
+      } catch (error) {
+        console.error('Error restoring data:', error);
+        showNotification('Failed to restore data from Supabase', 'error');
+      }
+    }
+
+    // Export data as JSON file
+    function exportAsJson() {
+      try {
+        supabase
+          .from('depots')
+          .select('*')
+          .order('id')
+          .then(({ data, error }) => {
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+              showNotification('No depots found in Supabase backup', 'error');
+              return;
+            }
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+            const exportFileDefaultName = `depot-backup-${new Date().toISOString().slice(0, 10)}.json`;
+
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+
+            showNotification('Successfully exported depots as JSON file');
+          });
+      } catch (error) {
+        console.error('Error exporting data:', error);
+        showNotification('Failed to export data as JSON', 'error');
+      }
+    }
+
+    // Event listeners
+    refreshBtn.addEventListener('click', fetchDepots);
+    backupBtn.addEventListener('click', backupCurrentData);
+    restoreBtn.addEventListener('click', restoreToLocal);
+    exportBtn.addEventListener('click', exportAsJson);
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      createStars();
+      fetchDepots();
+    });
+  </script>
+</body>
+</html>
