@@ -114,46 +114,92 @@
       flex: 1;
       position: relative;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-      border-radius: 25px;
+      border-radius: 8px;
       overflow: hidden;
+      gap: 5px;
     }
+
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: rgba(160, 160, 255, 0.7);
+      font-size: 14px;
+    }
+
+    .clear-search-button {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      color: rgba(160, 160, 255, 0.7);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .clear-search-button:hover {
+      background-color: rgba(100, 150, 255, 0.2);
+      color: #e0e0ff;
+    }
+
     #address-input {
       flex: 1;
-      padding: 0.6rem 0.8rem;
+      width: 100%;
+      padding: 0.8rem 1rem 0.8rem 35px;
       border: 1px solid rgba(100, 150, 255, 0.3);
-      border-right: none;
-      border-radius: 25px 0 0 25px;
-      font-size: 0.85rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
       transition: all 0.3s;
       background-color: rgba(15, 25, 50, 0.8);
       color: #e0e0ff;
       font-family: 'Exo 2', sans-serif;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2) inset;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.1) inset;
     }
+
     #address-input:focus {
       outline: none;
       background-color: rgba(20, 30, 60, 0.9);
-      box-shadow: 0 0 10px rgba(100, 150, 255, 0.3) inset, 0 0 5px rgba(100, 150, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 50, 255, 0.2) inset;
       border-color: rgba(100, 150, 255, 0.5);
+    }
+
+    #address-input::placeholder {
+      color: rgba(160, 160, 255, 0.5);
     }
     #search-button {
       background: linear-gradient(135deg, #3060ff, #6090ff);
       color: white;
-      border: none;
-      border-radius: 0 25px 25px 0;
-      padding: 0 1rem;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
       cursor: pointer;
       transition: all 0.3s;
-      font-size: 0.85rem;
-      width: 40px;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 0 10px rgba(0, 50, 255, 0.2);
+      min-width: 45px;
     }
     #search-button:hover {
       background: linear-gradient(135deg, #4070ff, #70a0ff);
-      box-shadow: 0 0 15px rgba(100, 150, 255, 0.5);
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 50, 255, 0.3);
+      border-color: rgba(100, 150, 255, 0.5);
     }
     /* Info window styles */
     .info-window {
@@ -179,7 +225,7 @@
     }
 
     .search-result-item {
-      padding: 10px 12px;
+      padding: 12px 15px;
       color: #e0e0ff;
       font-family: 'Exo 2', sans-serif;
       cursor: pointer;
@@ -187,12 +233,31 @@
       border-bottom: 1px solid rgba(100, 150, 255, 0.2);
       font-size: 14px;
       line-height: 1.4;
+      position: relative;
+      overflow: hidden;
     }
 
     .search-result-item:hover {
       background-color: rgba(48, 96, 255, 0.3);
       transform: translateY(-1px);
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-result-item:hover::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shine 1s ease-out;
+    }
+
+    @keyframes shine {
+      to {
+        left: 100%;
+      }
     }
 
     .search-result-item:active {
@@ -300,7 +365,13 @@
         <form id="search-form">
           <h2>Search Location</h2>
           <div class="search-input-container">
-            <input type="text" id="address-input" placeholder="Enter an address to check for depot support coverage...">
+            <div class="search-input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input type="text" id="address-input" placeholder="Enter an address to check for depot support coverage...">
+              <button id="clear-search" class="clear-search-button" style="display: none;">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
             <button type="button" id="search-button" aria-label="Search"><i class="fas fa-search"></i></button>
           </div>
         </form>
@@ -646,6 +717,15 @@
       // Input change for autocomplete
       searchInput.addEventListener('input', function() {
         const query = this.value.trim();
+        const clearSearchButton = document.getElementById('clear-search');
+
+        // Show/hide clear button based on search term
+        if (query.length > 0) {
+          clearSearchButton.style.display = 'flex';
+        } else {
+          clearSearchButton.style.display = 'none';
+        }
+
         console.log("Input changed, query:", query);
         if (query.length > 2) {
           // Fetch suggestions from Nominatim
@@ -655,6 +735,20 @@
           console.log("Query too short, hiding suggestions");
           searchResultsContainer.style.display = 'none';
         }
+      });
+
+      // Clear search button
+      const clearSearchButton = document.getElementById('clear-search');
+      clearSearchButton.addEventListener('click', function() {
+        // Clear input
+        searchInput.value = '';
+        this.style.display = 'none';
+
+        // Hide search results
+        searchResultsContainer.style.display = 'none';
+
+        // Focus on input
+        searchInput.focus();
       });
     }
 
