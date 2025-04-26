@@ -17,7 +17,7 @@
       flex-direction: column;
       min-height: 100vh;
     }
-    
+
     .container {
       max-width: 800px;
       margin: 50px auto;
@@ -27,14 +27,14 @@
       border: 1px solid rgba(100, 150, 255, 0.3);
       box-shadow: 0 0 20px rgba(0, 50, 255, 0.3);
     }
-    
+
     h1 {
       font-family: 'Orbitron', sans-serif;
       color: #a0a0ff;
       text-align: center;
       margin-bottom: 30px;
     }
-    
+
     .button {
       background: linear-gradient(135deg, #3060ff, #6090ff);
       color: white;
@@ -49,13 +49,13 @@
       text-align: center;
       margin-bottom: 20px;
     }
-    
+
     .button:hover {
       background: linear-gradient(135deg, #4070ff, #70a0ff);
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(0, 50, 255, 0.3);
     }
-    
+
     .status {
       margin-top: 20px;
       padding: 15px;
@@ -64,15 +64,15 @@
       border-left: 3px solid #3498db;
       display: none;
     }
-    
+
     .status.success {
       border-left-color: #2ecc71;
     }
-    
+
     .status.error {
       border-left-color: #e74c3c;
     }
-    
+
     .log {
       margin-top: 20px;
       padding: 15px;
@@ -84,7 +84,7 @@
       white-space: pre-wrap;
       display: none;
     }
-    
+
     .nav-button {
       color: #e0e0ff;
       text-decoration: none;
@@ -97,7 +97,7 @@
       gap: 8px;
       margin-top: 20px;
     }
-    
+
     .nav-button:hover {
       background: rgba(100, 150, 255, 0.25);
       transform: translateY(-2px);
@@ -107,57 +107,63 @@
 <body>
   <div class="container">
     <h1>Simple Supabase Backup</h1>
-    
+
     <button id="backup-button" class="button">
       <i class="fas fa-cloud-upload-alt"></i> Backup Depots to Supabase
     </button>
-    
+
     <div id="status" class="status"></div>
     <div id="log" class="log"></div>
-    
-    <a href="Latest Version/basic-depot-manager.html" class="nav-button">
-      <i class="fas fa-arrow-left"></i> Back to Depot Manager
-    </a>
+
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <a href="Latest Version/basic-depot-manager.html" class="nav-button">
+        <i class="fas fa-arrow-left"></i> Back to Depot Manager
+      </a>
+
+      <a href="https://supabase.com/dashboard/project/guqubcdsalglyqoqutee/settings/api" target="_blank" class="nav-button">
+        <i class="fas fa-key"></i> Get Supabase API Key
+      </a>
+    </div>
   </div>
-  
+
   <script>
     // DOM elements
     const backupButton = document.getElementById('backup-button');
     const statusElement = document.getElementById('status');
     const logElement = document.getElementById('log');
-    
+
     // Add event listener to backup button
     backupButton.addEventListener('click', backupToSupabase);
-    
+
     // Function to log messages
     function log(message) {
       logElement.style.display = 'block';
       logElement.textContent += message + '\n';
       logElement.scrollTop = logElement.scrollHeight;
     }
-    
+
     // Function to show status
     function showStatus(message, type = 'info') {
       statusElement.style.display = 'block';
       statusElement.textContent = message;
       statusElement.className = 'status ' + type;
     }
-    
+
     // Function to backup depots to Supabase
     async function backupToSupabase() {
       try {
         // Disable button during backup
         backupButton.disabled = true;
         backupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Backing up...';
-        
+
         // Clear previous logs
         logElement.textContent = '';
         logElement.style.display = 'block';
-        
+
         // Try to get depots from localStorage
         log('Getting depots from localStorage...');
         let depots = null;
-        
+
         try {
           // First try to get from depot-manager storage
           depots = JSON.parse(localStorage.getItem('depot-manager:depots'));
@@ -173,20 +179,45 @@
         } catch (e) {
           log('Error parsing localStorage: ' + e.message);
         }
-        
+
         if (!depots || depots.length === 0) {
           throw new Error('No depots found in localStorage. Please use the Depot Manager first to create some depots.');
         }
-        
+
         log(`Found ${depots.length} depots in localStorage`);
-        
+
         // Supabase API details
         const SUPABASE_URL = 'https://guqubcdsalglyqoqutee.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1cXViY2RzYWxnbHlxb3F1dGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0MzA5NjcsImV4cCI6MjAyOTAwNjk2N30.Nh83ebqzf9Nt-yDj3m0q0MJHzlITaagaWlIWyQb_29Y';
-        
+        let SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1cXViY2RzYWxnbHlxb3F1dGVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTM0MzA5NjcsImV4cCI6MjAyOTAwNjk2N30.Nh83ebqzf9Nt-yDj3m0q0MJHzlITaagaWlIWyQb_29Y';
+
+        // Let's try to get the API key from the depot manager if available
+        try {
+          const storedKey = localStorage.getItem('supabase-key');
+          if (storedKey) {
+            log('Found stored Supabase key');
+            SUPABASE_KEY = storedKey;
+          }
+        } catch (e) {
+          log('No stored Supabase key found, using default');
+        }
+
+        // Prompt user for API key if needed
+        if (!confirm('Continue with backup using the current Supabase API key?\n\nIf you get an "Invalid API key" error, click Cancel and enter your API key from the Supabase dashboard.')) {
+          const userKey = prompt('Please enter your Supabase API key (use the "anon" key from Project Settings > API):', SUPABASE_KEY);
+          if (userKey && userKey.trim() !== '') {
+            SUPABASE_KEY = userKey.trim();
+            try {
+              localStorage.setItem('supabase-key', SUPABASE_KEY);
+              log('Saved new API key for future use');
+            } catch (e) {
+              log('Could not save API key: ' + e.message);
+            }
+          }
+        }
+
         // Clear existing data in Supabase
         log('Clearing existing data from Supabase...');
-        
+
         const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/depots?id=neq.0`, {
           method: 'DELETE',
           headers: {
@@ -195,14 +226,14 @@
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (!deleteResponse.ok) {
           const errorData = await deleteResponse.json();
           throw new Error(`Error clearing existing data: ${JSON.stringify(errorData)}`);
         }
-        
+
         log('Successfully cleared existing data');
-        
+
         // Prepare data for insertion
         log('Preparing data for insertion...');
         const timestamp = new Date().toISOString();
@@ -216,10 +247,10 @@
           notes: depot.notes || '',
           backup_date: timestamp
         }));
-        
+
         // Insert data
         log('Uploading depots to Supabase...');
-        
+
         const insertResponse = await fetch(`${SUPABASE_URL}/rest/v1/depots`, {
           method: 'POST',
           headers: {
@@ -230,16 +261,16 @@
           },
           body: JSON.stringify(depotsForInsert)
         });
-        
+
         if (!insertResponse.ok) {
           const errorData = await insertResponse.json();
           throw new Error(`Error uploading to Supabase: ${JSON.stringify(errorData)}`);
         }
-        
+
         const data = await insertResponse.json();
         log(`Successfully uploaded ${data.length} depots to Supabase`);
         showStatus(`Successfully backed up ${data.length} depots to Supabase!`, 'success');
-        
+
       } catch (error) {
         log(`ERROR: ${error.message}`);
         showStatus(`Backup failed: ${error.message}`, 'error');
