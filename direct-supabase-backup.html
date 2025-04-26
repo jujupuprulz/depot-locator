@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Direct Supabase Backup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background-color: #0a1128;
+      color: #e0e0ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: rgba(15, 25, 50, 0.7);
+      border-radius: 10px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 50, 255, 0.3);
+    }
+    
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      color: #a0a0ff;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .button {
+      background: linear-gradient(135deg, #3060ff, #6090ff);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 12px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .button:hover {
+      background: linear-gradient(135deg, #4070ff, #70a0ff);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 50, 255, 0.3);
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      background-color: rgba(15, 25, 50, 0.5);
+      border-left: 3px solid #3498db;
+      display: none;
+    }
+    
+    .status.success {
+      border-left-color: #2ecc71;
+    }
+    
+    .status.error {
+      border-left-color: #e74c3c;
+    }
+    
+    .log {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 5px;
+      font-family: monospace;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      display: none;
+    }
+    
+    .nav-button {
+      color: #e0e0ff;
+      text-decoration: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      background: rgba(100, 150, 255, 0.15);
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    
+    .nav-button:hover {
+      background: rgba(100, 150, 255, 0.25);
+      transform: translateY(-2px);
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #a0a0ff;
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      background-color: rgba(15, 25, 50, 0.7);
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: rgba(100, 150, 255, 0.6);
+      box-shadow: 0 0 10px rgba(100, 150, 255, 0.3);
+    }
+    
+    .key-info {
+      font-size: 12px;
+      color: #a0a0ff;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Direct Supabase Backup</h1>
+    
+    <div class="form-group">
+      <label for="supabase-url">Supabase URL:</label>
+      <input type="text" id="supabase-url" value="https://guqubcdsalglyqoqutee.supabase.co">
+    </div>
+    
+    <div class="form-group">
+      <label for="supabase-key">Supabase API Key:</label>
+      <input type="text" id="supabase-key" placeholder="Enter your Supabase API key">
+      <div class="key-info">Use the "anon" key from your Supabase dashboard > Project Settings > API</div>
+    </div>
+    
+    <button id="backup-button" class="button">
+      <i class="fas fa-cloud-upload-alt"></i> Backup Depots to Supabase
+    </button>
+    
+    <div id="status" class="status"></div>
+    <div id="log" class="log"></div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <a href="Latest Version/basic-depot-manager.html" class="nav-button">
+        <i class="fas fa-arrow-left"></i> Back to Depot Manager
+      </a>
+      
+      <a href="https://supabase.com/dashboard/project/guqubcdsalglyqoqutee/settings/api" target="_blank" class="nav-button">
+        <i class="fas fa-key"></i> Get Supabase API Key
+      </a>
+    </div>
+  </div>
+  
+  <script>
+    // DOM elements
+    const backupButton = document.getElementById('backup-button');
+    const statusElement = document.getElementById('status');
+    const logElement = document.getElementById('log');
+    const supabaseUrlInput = document.getElementById('supabase-url');
+    const supabaseKeyInput = document.getElementById('supabase-key');
+    
+    // Try to load saved values
+    try {
+      const savedUrl = localStorage.getItem('supabase-url');
+      const savedKey = localStorage.getItem('supabase-key');
+      
+      if (savedUrl) {
+        supabaseUrlInput.value = savedUrl;
+      }
+      
+      if (savedKey) {
+        supabaseKeyInput.value = savedKey;
+      }
+    } catch (e) {
+      console.error('Error loading saved values:', e);
+    }
+    
+    // Add event listener to backup button
+    backupButton.addEventListener('click', backupToSupabase);
+    
+    // Function to log messages
+    function log(message) {
+      logElement.style.display = 'block';
+      logElement.textContent += message + '\n';
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+    
+    // Function to show status
+    function showStatus(message, type = 'info') {
+      statusElement.style.display = 'block';
+      statusElement.textContent = message;
+      statusElement.className = 'status ' + type;
+    }
+    
+    // Function to backup depots to Supabase
+    async function backupToSupabase() {
+      try {
+        // Get Supabase URL and API key
+        const supabaseUrl = supabaseUrlInput.value.trim();
+        const supabaseKey = supabaseKeyInput.value.trim();
+        
+        // Validate inputs
+        if (!supabaseUrl) {
+          throw new Error('Please enter a Supabase URL');
+        }
+        
+        if (!supabaseKey) {
+          throw new Error('Please enter a Supabase API key');
+        }
+        
+        // Save values for next time
+        try {
+          localStorage.setItem('supabase-url', supabaseUrl);
+          localStorage.setItem('supabase-key', supabaseKey);
+        } catch (e) {
+          console.error('Error saving values:', e);
+        }
+        
+        // Disable button during backup
+        backupButton.disabled = true;
+        backupButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Backing up...';
+        
+        // Clear previous logs
+        logElement.textContent = '';
+        logElement.style.display = 'block';
+        
+        // Try to get depots from localStorage
+        log('Getting depots from localStorage...');
+        let depots = null;
+        
+        try {
+          // First try to get from depot-manager storage
+          depots = JSON.parse(localStorage.getItem('depot-manager:depots'));
+          if (depots && depots.length > 0) {
+            log('Found depots in depot-manager:depots');
+          } else {
+            // Then try the regular depots key
+            depots = JSON.parse(localStorage.getItem('depots'));
+            if (depots && depots.length > 0) {
+              log('Found depots in depots key');
+            }
+          }
+        } catch (e) {
+          log('Error parsing localStorage: ' + e.message);
+        }
+        
+        if (!depots || depots.length === 0) {
+          throw new Error('No depots found in localStorage. Please use the Depot Manager first to create some depots.');
+        }
+        
+        log(`Found ${depots.length} depots in localStorage`);
+        
+        // Clear existing data in Supabase
+        log('Clearing existing data from Supabase...');
+        
+        const deleteResponse = await fetch(`${supabaseUrl}/rest/v1/depots?id=neq.0`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!deleteResponse.ok) {
+          const errorText = await deleteResponse.text();
+          let errorMessage = 'Unknown error';
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = JSON.stringify(errorData);
+          } catch (e) {
+            errorMessage = errorText;
+          }
+          
+          throw new Error(`Error clearing existing data: ${errorMessage}`);
+        }
+        
+        log('Successfully cleared existing data');
+        
+        // Prepare data for insertion
+        log('Preparing data for insertion...');
+        const timestamp = new Date().toISOString();
+        const depotsForInsert = depots.map(depot => ({
+          id: depot.id,
+          name: depot.name,
+          address: depot.address,
+          status: depot.status,
+          lat: depot.lat,
+          lng: depot.lng,
+          notes: depot.notes || '',
+          backup_date: timestamp
+        }));
+        
+        // Insert data
+        log('Uploading depots to Supabase...');
+        
+        const insertResponse = await fetch(`${supabaseUrl}/rest/v1/depots`, {
+          method: 'POST',
+          headers: {
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(depotsForInsert)
+        });
+        
+        if (!insertResponse.ok) {
+          const errorText = await insertResponse.text();
+          let errorMessage = 'Unknown error';
+          
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = JSON.stringify(errorData);
+          } catch (e) {
+            errorMessage = errorText;
+          }
+          
+          throw new Error(`Error uploading to Supabase: ${errorMessage}`);
+        }
+        
+        const data = await insertResponse.json();
+        log(`Successfully uploaded ${data.length} depots to Supabase`);
+        showStatus(`Successfully backed up ${data.length} depots to Supabase!`, 'success');
+        
+      } catch (error) {
+        log(`ERROR: ${error.message}`);
+        showStatus(`Backup failed: ${error.message}`, 'error');
+      } finally {
+        // Re-enable button
+        backupButton.disabled = false;
+        backupButton.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Backup Depots to Supabase';
+      }
+    }
+  </script>
+</body>
+</html>
