@@ -171,27 +171,56 @@
       border: 1px solid rgba(100, 150, 255, 0.3);
       border-top: none;
       border-radius: 0 0 8px 8px;
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
       z-index: 1000;
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
     }
 
     .search-result-item {
-      padding: 8px 10px;
+      padding: 10px 12px;
       color: #e0e0ff;
       font-family: 'Exo 2', sans-serif;
       cursor: pointer;
       transition: all 0.2s;
       border-bottom: 1px solid rgba(100, 150, 255, 0.2);
+      font-size: 14px;
+      line-height: 1.4;
     }
 
     .search-result-item:hover {
-      background-color: rgba(30, 40, 70, 0.95);
+      background-color: rgba(48, 96, 255, 0.3);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-result-item:active {
+      background-color: rgba(48, 96, 255, 0.5);
+      transform: translateY(0);
     }
 
     .search-result-item:last-child {
       border-bottom: none;
+    }
+
+    /* Scrollbar styling for search results */
+    .search-results::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .search-results::-webkit-scrollbar-track {
+      background: rgba(15, 25, 50, 0.5);
+      border-radius: 0 0 8px 0;
+    }
+
+    .search-results::-webkit-scrollbar-thumb {
+      background: rgba(100, 150, 255, 0.5);
+      border-radius: 4px;
+    }
+
+    .search-results::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 150, 255, 0.7);
     }
     .info-window h3 {
       margin-top: 0;
@@ -644,7 +673,7 @@
       searchResultsContainer.innerHTML = '<div class="search-result-item" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
 
       // Fetch from Nominatim with improved parameters
-      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&accept-language=en`)
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&extratags=1`)
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -668,34 +697,66 @@
               let displayName = result.display_name;
               // If it's too long, try to shorten it
               if (displayName.length > 70) {
-                if (result.address) {
-                  // Create a more readable address format
-                  const parts = [];
-                  if (result.address.road) parts.push(result.address.road);
-                  if (result.address.city) parts.push(result.address.city);
-                  if (result.address.state) parts.push(result.address.state);
-                  if (result.address.country) parts.push(result.address.country);
-
-                  if (parts.length > 0) {
-                    displayName = parts.join(', ');
-                  }
+                const parts = displayName.split(',');
+                if (parts.length > 3) {
+                  // Keep first part, then add country
+                  displayName = parts[0] + ', ' + parts[parts.length-2] + ', ' + parts[parts.length-1];
                 }
               }
 
               resultItem.textContent = displayName;
 
               // Add click handler
-              resultItem.addEventListener('click', function() {
+              resultItem.addEventListener('click', async function() {
                 // Set input value
-                document.getElementById('address-input').value = displayName;
+                document.getElementById('address-input').value = result.display_name;
 
                 // Hide results
                 searchResultsContainer.style.display = 'none';
 
+                // Check if the address is in an embargoed country
+                const embargoResult = await checkEmbargoedCountry(result.display_name);
+                if (embargoResult.isEmbargoed) {
+                  // Add a small delay to prevent rate limiting issues
+                  setTimeout(() => {
+                    // Perform search with this location for embargoed country
+                    performSearchWithCoordinates(result.display_name, parseFloat(result.lat), parseFloat(result.lon));
+                  }, 300);
+                  return;
+                }
+
+                // Get coordinates from the result
+                let lat = parseFloat(result.lat);
+                let lon = parseFloat(result.lon);
+
+                // Special handling for Taiwan addresses
+                const isTaiwanAddress = result.display_name.toLowerCase().includes('taiwan') ||
+                                      (result.address && result.address.country &&
+                                       result.address.country.toLowerCase().includes('taiwan'));
+
+                if (isTaiwanAddress) {
+                  console.log("Taiwan address detected in autocomplete, using special handling");
+
+                  // If the geocoding didn't return Taiwan coordinates but we know it's Taiwan
+                  if (!(lat > 20 && lat < 30 && lon > 115 && lon < 125)) {
+                    console.log("Geocoding returned incorrect coordinates for Taiwan, using default Taiwan coordinates");
+                    // Use default coordinates for Taipei
+                    if (result.display_name.toLowerCase().includes('taipei')) {
+                      lat = 25.0330;
+                      lon = 121.5654;
+                    } else {
+                      // General Taiwan coordinates
+                      lat = 23.6978;
+                      lon = 120.9605;
+                    }
+                  }
+                  console.log(`Using Taiwan coordinates: ${lat}, ${lon}`);
+                }
+
                 // Add a small delay to prevent rate limiting issues
                 setTimeout(() => {
                   // Perform search with this location
-                  performSearchWithCoordinates(result.display_name, parseFloat(result.lat), parseFloat(result.lon));
+                  performSearchWithCoordinates(result.display_name, lat, lon);
                 }, 300);
               });
 
