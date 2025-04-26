@@ -470,6 +470,70 @@
       flex-shrink: 0;
     }
 
+    /* Search box styles */
+    .depot-search-container {
+      padding: 10px 15px;
+      background-color: rgba(15, 25, 50, 0.5);
+      border-bottom: 1px solid rgba(100, 150, 255, 0.3);
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      color: rgba(160, 160, 255, 0.7);
+      font-size: 14px;
+    }
+
+    .depot-search-input {
+      width: 100%;
+      padding: 8px 30px 8px 35px;
+      border-radius: 20px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      background-color: rgba(15, 25, 50, 0.7);
+      color: #e0e0ff;
+      font-family: 'Exo 2', sans-serif;
+      transition: all 0.3s ease;
+    }
+
+    .depot-search-input:focus {
+      outline: none;
+      border-color: rgba(100, 150, 255, 0.6);
+      box-shadow: 0 0 10px rgba(100, 150, 255, 0.3);
+    }
+
+    .depot-search-input::placeholder {
+      color: rgba(160, 160, 255, 0.5);
+    }
+
+    .clear-search-button {
+      position: absolute;
+      right: 10px;
+      background: none;
+      border: none;
+      color: rgba(160, 160, 255, 0.7);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+    }
+
+    .clear-search-button:hover {
+      background-color: rgba(100, 150, 255, 0.2);
+      color: #e0e0ff;
+    }
+
     .depot-list-title {
       margin: 0;
       color: #a0a0ff;
@@ -506,6 +570,132 @@
       display: flex;
       flex-direction: column;
       flex: 1;
+    }
+
+    /* Status section header styles - now primary headers */
+    .depot-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 15px;
+      margin-top: 15px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .depot-section-header:hover {
+      transform: translateY(-2px);
+    }
+
+    .depot-section-header.status-approved {
+      background-color: rgba(46, 204, 113, 0.15);
+      border-left: 3px solid #2ecc71;
+    }
+
+    .depot-section-header.status-in-progress {
+      background-color: rgba(241, 196, 15, 0.15);
+      border-left: 3px solid #f1c40f;
+    }
+
+    .depot-section-header.status-not-approved {
+      background-color: rgba(231, 76, 60, 0.15);
+      border-left: 3px solid #e74c3c;
+    }
+
+    /* Region header styles - now secondary headers */
+    .region-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 15px;
+      margin-top: 5px;
+      margin-bottom: 5px;
+      margin-left: 15px;
+      background-color: rgba(44, 62, 80, 0.2);
+      color: #a0a0ff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 2px solid #3498db;
+    }
+
+    .region-header:hover {
+      background-color: rgba(52, 73, 94, 0.3);
+    }
+
+    .region-title {
+      display: flex;
+      align-items: center;
+    }
+
+    .region-title i {
+      margin-right: 8px;
+      font-size: 14px;
+      color: #a0a0ff;
+    }
+
+    .region-title h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      color: #a0a0ff;
+    }
+
+    .region-toggle {
+      background: none;
+      border: none;
+      color: #a0a0ff;
+      cursor: pointer;
+      padding: 5px;
+      font-size: 12px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+    }
+
+    .section-title i {
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .section-toggle {
+      background: none;
+      border: none;
+      color: #a0a0ff;
+      cursor: pointer;
+      padding: 5px;
+      font-size: 14px;
+    }
+
+    .section-title i {
+      margin-right: 8px;
+      font-size: 14px;
+    }
+
+    .section-title h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .section-toggle {
+      background: none;
+      border: none;
+      color: #a0a0ff;
+      cursor: pointer;
+      padding: 5px;
+      font-size: 12px;
     }
 
     .depot-item {
@@ -996,6 +1186,18 @@
           </button>
         </div>
       </div>
+
+      <!-- Search Box -->
+      <div class="depot-search-container">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" id="depot-search" placeholder="Search depots..." class="depot-search-input">
+          <button id="clear-search" class="clear-search-button" style="display: none;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
       <ul class="depot-list" id="depot-list">
         <!-- Depot items will be added here dynamically -->
       </ul>
@@ -1275,6 +1477,32 @@
 
     // Set up event listeners
     function setupEventListeners() {
+      // Set up search functionality
+      const searchInput = document.getElementById('depot-search');
+      const clearSearchButton = document.getElementById('clear-search');
+
+      // Search input event
+      searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.trim().toLowerCase();
+
+        // Show/hide clear button based on search term
+        if (searchTerm.length > 0) {
+          clearSearchButton.style.display = 'flex';
+        } else {
+          clearSearchButton.style.display = 'none';
+        }
+
+        // Filter depots based on search term
+        filterDepots(searchTerm);
+      });
+
+      // Clear search button
+      clearSearchButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearSearchButton.style.display = 'none';
+        filterDepots('');
+        searchInput.focus();
+      });
 
       // Add depot button
       document.getElementById('add-depot-button').addEventListener('click', function() {
@@ -1582,122 +1810,288 @@
       }
     }
 
+    // Determine region based on country
+    function getRegion(address) {
+      // Extract country from address
+      const addressParts = address.split(',');
+      const countryPart = addressParts[addressParts.length - 1].trim().toLowerCase();
+
+      // APAC countries
+      const apacCountries = ['australia', 'china', 'japan', 'south korea', 'korea', 'taiwan', 'singapore', 'malaysia',
+                            'indonesia', 'philippines', 'thailand', 'vietnam', 'new zealand', 'india', 'pakistan',
+                            'bangladesh', 'sri lanka', 'nepal', 'hong kong', 'macau'];
+
+      // EMEA countries
+      const emeaCountries = ['united kingdom', 'uk', 'great britain', 'england', 'france', 'germany', 'italy', 'spain',
+                            'portugal', 'netherlands', 'belgium', 'luxembourg', 'switzerland', 'austria', 'sweden',
+                            'norway', 'denmark', 'finland', 'ireland', 'greece', 'turkey', 'russia', 'poland', 'czech republic',
+                            'hungary', 'romania', 'bulgaria', 'ukraine', 'belarus', 'serbia', 'croatia', 'slovenia',
+                            'slovakia', 'estonia', 'latvia', 'lithuania', 'south africa', 'egypt', 'morocco', 'algeria',
+                            'tunisia', 'kenya', 'nigeria', 'ghana', 'saudi arabia', 'uae', 'united arab emirates', 'qatar',
+                            'kuwait', 'bahrain', 'oman', 'israel', 'jordan', 'lebanon'];
+
+      // LATAM countries
+      const latamCountries = ['mexico', 'brazil', 'argentina', 'colombia', 'chile', 'peru', 'ecuador', 'venezuela',
+                             'bolivia', 'paraguay', 'uruguay', 'costa rica', 'panama', 'guatemala', 'honduras',
+                             'el salvador', 'nicaragua', 'belize', 'cuba', 'dominican republic', 'haiti', 'jamaica',
+                             'puerto rico', 'trinidad and tobago'];
+
+      // NA countries
+      const naCountries = ['united states', 'usa', 'us', 'u.s.', 'u.s.a.', 'america', 'canada'];
+
+      // Check which region the country belongs to
+      if (apacCountries.some(country => countryPart.includes(country))) {
+        return 'APAC';
+      } else if (emeaCountries.some(country => countryPart.includes(country))) {
+        return 'EMEA';
+      } else if (latamCountries.some(country => countryPart.includes(country))) {
+        return 'LATAM';
+      } else if (naCountries.some(country => countryPart.includes(country))) {
+        return 'NA';
+      } else {
+        // Default to Other if we can't determine the region
+        return 'Other';
+      }
+    }
+
     // Render the depot list
     function renderDepotList() {
       const depotList = document.getElementById('depot-list');
       depotList.innerHTML = ''; // Clear existing items
 
-      // Group depots by status
-      const groupedDepots = {
-        approved: depots.filter(d => d.status === 'approved'),
-        inProgress: depots.filter(d => d.status === 'in-progress'),
-        notApproved: depots.filter(d => d.status === 'not-approved')
+      if (depots.length === 0) {
+        depotList.innerHTML = '<div class="no-depots">No depots found. Click "Add Depot" to create one.</div>';
+        return;
+      }
+
+      // Group depots by status and then by region
+      const statusDepots = {
+        'approved': { NA: [], LATAM: [], EMEA: [], APAC: [], Other: [] },
+        'in-progress': { NA: [], LATAM: [], EMEA: [], APAC: [], Other: [] },
+        'not-approved': { NA: [], LATAM: [], EMEA: [], APAC: [], Other: [] }
+      };
+
+      // Categorize depots by status and region
+      depots.forEach(depot => {
+        const region = getRegion(depot.address);
+
+        if (depot.status === 'approved') {
+          statusDepots['approved'][region].push(depot);
+        } else if (depot.status === 'in-progress') {
+          statusDepots['in-progress'][region].push(depot);
+        } else if (depot.status === 'not-approved') {
+          statusDepots['not-approved'][region].push(depot);
+        }
+      });
+
+      // Sort depots by name within each category
+      Object.keys(statusDepots).forEach(status => {
+        Object.keys(statusDepots[status]).forEach(region => {
+          statusDepots[status][region].sort((a, b) => a.name.localeCompare(b.name));
+        });
+      });
+
+      // Define status sections with icons and colors
+      const statusSections = [
+        {
+          status: 'approved',
+          label: 'Approved',
+          icon: 'fa-check-circle',
+          regions: statusDepots['approved']
+        },
+        {
+          status: 'in-progress',
+          label: 'In Progress',
+          icon: 'fa-clock',
+          regions: statusDepots['in-progress']
+        },
+        {
+          status: 'not-approved',
+          label: 'Not Approved',
+          icon: 'fa-times-circle',
+          regions: statusDepots['not-approved']
+        }
+      ];
+
+      // Define region order and icons
+      const regionOrder = ['NA', 'LATAM', 'EMEA', 'APAC', 'Other'];
+      const regionIcons = {
+        'NA': 'fa-map-marker-alt',
+        'LATAM': 'fa-globe-americas',
+        'EMEA': 'fa-globe-europe',
+        'APAC': 'fa-globe-asia',
+        'Other': 'fa-globe'
       };
 
       // Create status sections
-      const statusSections = [
-        { status: 'approved', label: 'Approved', icon: 'fa-check-circle', depots: groupedDepots.approved },
-        { status: 'in-progress', label: 'In Progress', icon: 'fa-clock', depots: groupedDepots.inProgress },
-        { status: 'not-approved', label: 'Not Approved', icon: 'fa-times-circle', depots: groupedDepots.notApproved }
-      ];
-
-      // Create each status section
       statusSections.forEach(section => {
-        if (section.depots.length === 0) return; // Skip empty sections
+        // Count total depots in this status
+        let totalStatusDepots = 0;
+        Object.values(section.regions).forEach(regionDepots => {
+          totalStatusDepots += regionDepots.length;
+        });
 
-        // Create section header
-        const sectionHeader = document.createElement('div');
-        sectionHeader.className = `depot-section-header status-${section.status}`;
+        if (totalStatusDepots === 0) return; // Skip empty status sections
 
-        // Create section title with icon
-        const sectionTitle = document.createElement('div');
-        sectionTitle.className = 'section-title';
-        sectionTitle.innerHTML = `
+        // Create status header
+        const statusHeader = document.createElement('div');
+        statusHeader.className = `depot-section-header status-${section.status}`;
+
+        // Create status title with icon
+        const statusTitle = document.createElement('div');
+        statusTitle.className = 'section-title';
+        statusTitle.innerHTML = `
           <i class="fas ${section.icon}"></i>
-          <h3>${section.label} (${section.depots.length})</h3>
+          <h3>${section.label} (${totalStatusDepots})</h3>
         `;
 
         // Create toggle button
-        const toggleButton = document.createElement('button');
-        toggleButton.className = 'section-toggle';
-        toggleButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
-        toggleButton.title = 'Expand';
+        const toggleStatusButton = document.createElement('button');
+        toggleStatusButton.className = 'section-toggle';
+        toggleStatusButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        toggleStatusButton.title = 'Expand';
 
-        // Add click event to toggle section
-        sectionHeader.addEventListener('click', function() {
-          const depotItems = document.querySelectorAll(`.depot-item[data-status="${section.status}"]`);
-          const isMinimized = toggleButton.title === 'Expand';
+        // Add click event to toggle status section
+        statusHeader.addEventListener('click', function() {
+          const regionSections = document.querySelectorAll(`.region-header[data-status="${section.status}"]`);
+          const isMinimized = toggleStatusButton.title === 'Expand';
 
-          depotItems.forEach(item => {
-            item.style.display = isMinimized ? 'flex' : 'none';
+          regionSections.forEach(regionSection => {
+            regionSection.style.display = isMinimized ? 'flex' : 'none';
           });
 
-          toggleButton.innerHTML = isMinimized ?
+          // Also toggle all depot items for this status
+          const depotItems = document.querySelectorAll(`.depot-item[data-status="${section.status}"]`);
+          depotItems.forEach(item => {
+            if (isMinimized) {
+              // When expanding, we need to check if the parent region is expanded
+              const regionHeader = document.querySelector(`.region-header[data-status="${section.status}"][data-region="${item.getAttribute('data-region')}"]`);
+              const regionToggle = regionHeader.querySelector('.region-toggle');
+              if (regionToggle.title === 'Minimize') {
+                item.style.display = 'flex';
+              }
+            } else {
+              item.style.display = 'none';
+            }
+          });
+
+          toggleStatusButton.innerHTML = isMinimized ?
             '<i class="fas fa-chevron-down"></i>' :
             '<i class="fas fa-chevron-right"></i>';
-          toggleButton.title = isMinimized ? 'Minimize' : 'Expand';
+          toggleStatusButton.title = isMinimized ? 'Minimize' : 'Expand';
         });
 
-        // Add elements to section header
-        sectionHeader.appendChild(sectionTitle);
-        sectionHeader.appendChild(toggleButton);
-        depotList.appendChild(sectionHeader);
+        // Add elements to status header
+        statusHeader.appendChild(statusTitle);
+        statusHeader.appendChild(toggleStatusButton);
+        depotList.appendChild(statusHeader);
 
-        // Create depot items for this section
-        section.depots.forEach(depot => {
-          const listItem = document.createElement('li');
-          listItem.className = 'depot-item';
-          listItem.setAttribute('data-status', section.status);
-          listItem.style.display = 'none'; // Hide by default
+        // Create region sections for this status
+        regionOrder.forEach(region => {
+          const regionDepots = section.regions[region];
 
-          // Create the main content div
-          const contentDiv = document.createElement('div');
-          contentDiv.className = 'depot-content';
-          contentDiv.innerHTML = `
-            <h3>${depot.name}</h3>
-            <p><strong>Address:</strong> ${depot.address}</p>
-            ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+          if (regionDepots.length === 0) return; // Skip empty regions
+
+          // Create region header
+          const regionHeader = document.createElement('div');
+          regionHeader.className = 'region-header';
+          regionHeader.setAttribute('data-status', section.status);
+          regionHeader.setAttribute('data-region', region);
+
+          // Create region title with icon
+          const regionTitle = document.createElement('div');
+          regionTitle.className = 'region-title';
+          regionTitle.innerHTML = `
+            <i class="fas ${regionIcons[region]}"></i>
+            <h2>${region} (${regionDepots.length})</h2>
           `;
 
-          // Add click event to center map on this depot
-          contentDiv.addEventListener('click', function() {
-            centerMapOnDepot(depot);
+          // Create toggle button for region
+          const toggleRegionButton = document.createElement('button');
+          toggleRegionButton.className = 'region-toggle';
+          toggleRegionButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          toggleRegionButton.title = 'Expand';
+
+          // Add click event to toggle region
+          regionHeader.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering the parent status toggle
+
+            const depotItems = document.querySelectorAll(`.depot-item[data-status="${section.status}"][data-region="${region}"]`);
+            const isMinimized = toggleRegionButton.title === 'Expand';
+
+            depotItems.forEach(item => {
+              item.style.display = isMinimized ? 'flex' : 'none';
+            });
+
+            toggleRegionButton.innerHTML = isMinimized ?
+              '<i class="fas fa-chevron-down"></i>' :
+              '<i class="fas fa-chevron-right"></i>';
+            toggleRegionButton.title = isMinimized ? 'Minimize' : 'Expand';
           });
 
-          // Create the actions div
-          const actionsDiv = document.createElement('div');
-          actionsDiv.className = 'depot-actions';
+          // Add elements to region header
+          regionHeader.appendChild(regionTitle);
+          regionHeader.appendChild(toggleRegionButton);
+          depotList.appendChild(regionHeader);
 
-          // Create edit button
-          const editButton = document.createElement('button');
-          editButton.className = 'edit-button';
-          editButton.innerHTML = '<i class="fas fa-edit"></i>';
-          editButton.title = 'Edit Depot';
-          editButton.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent triggering the parent click event
-            openDepotModal(depot);
+          // Create depot items for this region
+          regionDepots.forEach(depot => {
+            const listItem = document.createElement('li');
+            listItem.className = 'depot-item';
+            listItem.setAttribute('data-id', depot.id);
+            listItem.setAttribute('data-status', section.status);
+            listItem.setAttribute('data-region', region);
+            listItem.style.display = 'none'; // Hide by default
+
+            // Create the main content div
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'depot-content';
+            contentDiv.innerHTML = `
+              <h3>${depot.name}</h3>
+              <p><strong>Address:</strong> ${depot.address}</p>
+              ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
+            `;
+
+            // Add click event to center map on this depot
+            contentDiv.addEventListener('click', function() {
+              centerMapOnDepot(depot);
+            });
+
+            // Create the actions div
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'depot-actions';
+
+            // Create edit button
+            const editButton = document.createElement('button');
+            editButton.className = 'edit-button';
+            editButton.innerHTML = '<i class="fas fa-edit"></i>';
+            editButton.title = 'Edit Depot';
+            editButton.addEventListener('click', function(e) {
+              e.stopPropagation(); // Prevent triggering the parent click event
+              openDepotModal(depot);
+            });
+
+            // Create delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            deleteButton.title = 'Delete Depot';
+            deleteButton.addEventListener('click', function(e) {
+              e.stopPropagation(); // Prevent triggering the parent click event
+              openConfirmModal(depot.id);
+            });
+
+            // Add buttons to actions div
+            actionsDiv.appendChild(editButton);
+            actionsDiv.appendChild(deleteButton);
+
+            // Add content and actions to list item
+            listItem.appendChild(contentDiv);
+            listItem.appendChild(actionsDiv);
+
+            // Add list item to depot list
+            depotList.appendChild(listItem);
           });
-
-          // Create delete button
-          const deleteButton = document.createElement('button');
-          deleteButton.className = 'delete-button';
-          deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
-          deleteButton.title = 'Delete Depot';
-          deleteButton.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent triggering the parent click event
-            openConfirmModal(depot.id);
-          });
-
-          // Add buttons to actions div
-          actionsDiv.appendChild(editButton);
-          actionsDiv.appendChild(deleteButton);
-
-          // Add content and actions to list item
-          listItem.appendChild(contentDiv);
-          listItem.appendChild(actionsDiv);
-
-          // Add list item to depot list
-          depotList.appendChild(listItem);
         });
       });
     }
@@ -1751,6 +2145,90 @@
     }
 
 
+
+    // Filter depots based on search term
+    function filterDepots(searchTerm) {
+      // If search is empty, restore original view (all collapsed)
+      if (!searchTerm) {
+        // Hide all depot items
+        document.querySelectorAll('.depot-item').forEach(item => {
+          item.style.display = 'none';
+        });
+
+        // Reset all status headers to collapsed state
+        document.querySelectorAll('.depot-section-header').forEach(header => {
+          const toggleButton = header.querySelector('.section-toggle');
+          toggleButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          toggleButton.title = 'Expand';
+        });
+
+        // Reset all region headers to collapsed state
+        document.querySelectorAll('.region-header').forEach(header => {
+          const toggleButton = header.querySelector('.region-toggle');
+          toggleButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+          toggleButton.title = 'Expand';
+          header.style.display = 'flex'; // Make sure region headers are visible
+        });
+
+        return;
+      }
+
+      // Track which depots match the search
+      const matchingDepots = [];
+
+      // Check each depot for matches
+      depots.forEach(depot => {
+        const nameMatch = depot.name.toLowerCase().includes(searchTerm);
+        const addressMatch = depot.address.toLowerCase().includes(searchTerm);
+        const notesMatch = depot.notes && depot.notes.toLowerCase().includes(searchTerm);
+
+        if (nameMatch || addressMatch || notesMatch) {
+          matchingDepots.push(depot.id);
+        }
+      });
+
+      // Show/hide depot items based on search results
+      document.querySelectorAll('.depot-item').forEach(item => {
+        const depotId = parseInt(item.getAttribute('data-id'));
+        if (matchingDepots.includes(depotId)) {
+          item.style.display = 'flex'; // Show matching depots
+
+          // Show parent region header
+          const region = item.getAttribute('data-region');
+          const status = item.getAttribute('data-status');
+          const regionHeader = document.querySelector(`.region-header[data-region="${region}"][data-status="${status}"]`);
+          if (regionHeader) {
+            regionHeader.style.display = 'flex';
+
+            // Update region toggle button
+            const regionToggle = regionHeader.querySelector('.region-toggle');
+            regionToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            regionToggle.title = 'Minimize';
+          }
+
+          // Show parent status header and update its toggle button
+          const statusHeader = document.querySelector(`.depot-section-header.status-${status}`);
+          if (statusHeader) {
+            const statusToggle = statusHeader.querySelector('.section-toggle');
+            statusToggle.innerHTML = '<i class="fas fa-chevron-down"></i>';
+            statusToggle.title = 'Minimize';
+          }
+        } else {
+          item.style.display = 'none'; // Hide non-matching depots
+        }
+      });
+
+      // Hide region headers with no matching depots
+      document.querySelectorAll('.region-header').forEach(header => {
+        const region = header.getAttribute('data-region');
+        const status = header.getAttribute('data-status');
+        const hasMatchingDepots = document.querySelector(`.depot-item[data-region="${region}"][data-status="${status}"][style*="display: flex"]`);
+
+        if (!hasMatchingDepots) {
+          header.style.display = 'none';
+        }
+      });
+    }
 
     // Get human-readable status label
     function getStatusLabel(status) {
@@ -1824,7 +2302,6 @@
             <h3>${depot.name}</h3>
             <p><strong>Address:</strong> ${depot.address}</p>
             <p><strong>Status:</strong> <span class="status-${depot.status}">${getStatusLabel(depot.status)}</span></p>
-            <p><strong>Coordinates:</strong> ${depot.lat.toFixed(6)}, ${depot.lng.toFixed(6)}</p>
             ${depot.notes ? `<p><strong>Notes:</strong> ${depot.notes}</p>` : ''}
           </div>
         `;
@@ -2027,12 +2504,11 @@
               })
             }).addTo(map);
 
-            // Show coordinates in a popup
+            // Show location in a popup
             tempMarker.bindPopup(`
               <div class="info-window">
                 <h3>Selected Location</h3>
                 <p><strong>Address:</strong> ${result.display_name}</p>
-                <p><strong>Coordinates:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}</p>
               </div>
             `).openPopup();
 
@@ -2084,12 +2560,11 @@
                 })
               }).addTo(map);
 
-              // Show coordinates in a popup
+              // Show location in a popup
               tempMarker.bindPopup(`
                 <div class="info-window">
                   <h3>Taiwan Location</h3>
                   <p><strong>Address:</strong> ${address}</p>
-                  <p><strong>Coordinates:</strong> ${lat.toFixed(6)}, ${lon.toFixed(6)}</p>
                   <p><em>Using default Taiwan coordinates</em></p>
                 </div>
               `).openPopup();
