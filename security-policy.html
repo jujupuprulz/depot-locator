@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Policy - Depot Locator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background-color: #0a1128;
+      color: #e0e0ff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 30px;
+      background-color: rgba(15, 25, 50, 0.7);
+      border-radius: 10px;
+      border: 1px solid rgba(100, 150, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 50, 255, 0.3);
+    }
+    
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      color: #a0a0ff;
+      margin-bottom: 30px;
+    }
+    
+    h2 {
+      color: #a0a0ff;
+      margin-top: 30px;
+      font-family: 'Orbitron', sans-serif;
+    }
+    
+    p {
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    
+    ul {
+      margin-bottom: 20px;
+    }
+    
+    li {
+      margin-bottom: 10px;
+    }
+    
+    .nav-button {
+      color: #e0e0ff;
+      text-decoration: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      background: rgba(100, 150, 255, 0.15);
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    
+    .nav-button:hover {
+      background: rgba(100, 150, 255, 0.25);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Security Policy</h1>
+    
+    <p>
+      We take the security of the Depot Locator application seriously. This document outlines our security practices and how to report security vulnerabilities.
+    </p>
+    
+    <h2>Data Security</h2>
+    <p>
+      The Depot Locator application stores data in the following ways:
+    </p>
+    <ul>
+      <li>Local browser storage for temporary data</li>
+      <li>Supabase database for persistent storage</li>
+    </ul>
+    <p>
+      All data is transmitted securely using HTTPS. We do not collect or store personal information beyond what is necessary for the application to function.
+    </p>
+    
+    <h2>Security Measures</h2>
+    <p>
+      We implement the following security measures:
+    </p>
+    <ul>
+      <li>Content Security Policy (CSP) to prevent XSS attacks</li>
+      <li>HTTP security headers to protect against common web vulnerabilities</li>
+      <li>HTTPS-only access to ensure encrypted data transmission</li>
+      <li>Regular security updates and dependency maintenance</li>
+    </ul>
+    
+    <h2>Reporting Security Issues</h2>
+    <p>
+      If you discover a security vulnerability, please report it by emailing <a href="mailto:jswtsao@gmail.com" style="color: #a0a0ff;">jswtsao@gmail.com</a>. We request that you:
+    </p>
+    <ul>
+      <li>Provide detailed information about the vulnerability</li>
+      <li>Allow us reasonable time to address the issue before public disclosure</li>
+      <li>Avoid accessing or modifying user data during your investigation</li>
+    </ul>
+    
+    <h2>Updates to This Policy</h2>
+    <p>
+      This security policy may be updated from time to time. The latest version will always be available on this page.
+    </p>
+    
+    <a href="index.html" class="nav-button">
+      ← Back to Home
+    </a>
+  </div>
+</body>
+</html>

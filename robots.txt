@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /direct-supabase-backup.html
+Disallow: /supabase-backup.html
+
+# Sitemap
+Sitemap: https://your-netlify-site.netlify.app/sitemap.xml

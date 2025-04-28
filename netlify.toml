@@ -2,7 +2,13 @@
   # The directory to publish (relative to root of your repo)
   publish = "."
 
-# Redirects and headers are GLOBAL for all builds – they do not get scoped to 
+# Ensure .well-known directory is properly deployed
+[[headers]]
+  for = "/.well-known/*"
+  [headers.values]
+    Content-Type = "text/plain"
+
+# Redirects and headers are GLOBAL for all builds – they do not get scoped to
 # contexts no matter where you define them in the file.
 # For context-specific rules, use _headers or _redirects files, which are
 # PER-DEPLOY.
@@ -13,16 +19,14 @@
   to = "/index.html"
   status = 200
 
-# The following redirect is intended for use with most SPAs that handle
-# routing internally.
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  
-  # This rule will handle single page applications (SPA) routing
-  # Force trailing slashes
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https://raw.githubusercontent.com https://cdnjs.cloudflare.com https://*.basemaps.cartocdn.com https://*.openstreetmap.org; connect-src 'self' https://*.supabase.co https://nominatim.openstreetmap.org; frame-src 'none';"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(self), interest-cohort=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
